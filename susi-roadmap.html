@@ -586,6 +586,16 @@
       return db.doc(path).set(data);
     });
   }
+  // Writes several docs one at a time (not concurrently) and resolves with
+  // each writeDoc() result in order, once every write has settled.
+  function writeDocsSequential(entries){
+    var results = [];
+    var p = Promise.resolve();
+    entries.forEach(function(e){
+      p = p.then(function(){ return writeDoc(e[0], e[1]); }).then(function(r){ results.push(r); });
+    });
+    return p.then(function(){ return results; });
+  }
 
   // ---------- rendering ----------
   function renderAll(){
@@ -600,9 +610,20 @@
     renderGoals();
   }
 
+  var DEFAULT_BANNER_HTML = '<strong>예시 데이터</strong>가 표시되어 있어요. 실제 성적을 입력하려면 먼저 초기화하세요.';
   function renderBanner(){
     var b = document.getElementById('exampleBanner');
+    var span = b.querySelector('span');
+    if(span.dataset.alert !== '1'){ span.innerHTML = DEFAULT_BANNER_HTML; }
     b.hidden = state.settings.isExample === false;
+  }
+  function alertBanner(msg){
+    var b = document.getElementById('exampleBanner');
+    var span = b.querySelector('span');
+    span.textContent = msg;
+    span.dataset.alert = '1';
+    b.hidden = false;
+    setTimeout(function(){ span.dataset.alert = '0'; renderBanner(); }, 5000);
   }
 
   function renderSummary(){
@@ -1052,16 +1073,40 @@
   });
 
   document.getElementById('clearExampleBtn').addEventListener('click', function(){
+    var btn = this;
+    if(btn.disabled) return;
     state.userEditedExams = true;
+    var entries = [];
     ROUNDS.forEach(function(r){
       var subjects = {};
       SUBJ_BASE.forEach(function(s){ subjects[s.id] = {score:'', grade:''}; });
       state.exams[r.id] = Object.assign({}, state.exams[r.id], {subjects:subjects});
-      writeDoc('exams/'+r.id, {subjects:subjects});
+      entries.push(['exams/'+r.id, {subjects:subjects}]);
     });
+    entries.push(['settings/main', {isExample:false}]);
     state.settings.isExample = false;
-    writeDoc('settings/main', {isExample:false});
     renderAll();
+    if(!db){
+      alertBanner('저장 기능을 쓸 수 없는 보기예요. 화면은 비워졌지만 저장되지 않았어요.');
+      return;
+    }
+    btn.disabled = true;
+    var origLabel = btn.textContent;
+    btn.textContent = '초기화 중…';
+    writeDocsSequential(entries).then(function(results){
+      btn.disabled = false;
+      var failed = results.filter(function(r){ return !r.ok; }).length;
+      if(failed>0){
+        btn.textContent = origLabel;
+        state.settings.isExample = true; // write didn't fully land — keep the banner honest
+        renderBanner();
+        alertBanner('초기화 저장에 실패했어요('+failed+'/'+results.length+'). 인터넷 연결을 확인하고 다시 눌러주세요.');
+      } else {
+        btn.textContent = origLabel;
+        state.settings.isExample = false;
+        renderBanner();
+      }
+    });
   });
 
   document.getElementById('applyEntryBtn').addEventListener('click', function(){
@@ -1103,13 +1148,13 @@
       flash.style.opacity = '1';
       return;
     }
-    var writes = Object.keys(byRound).map(function(round){
-      return writeDoc('exams/'+round, {subjects: byRound[round]});
+    var entries = Object.keys(byRound).map(function(round){
+      return ['exams/'+round, {subjects: byRound[round]}];
     });
     flash.textContent = '저장 중…';
     flash.style.color = 'var(--ink-3)';
     flash.style.opacity = '1';
-    Promise.all(writes).then(function(results){
+    writeDocsSequential(entries).then(function(results){
       var failed = results.filter(function(r){ return !r.ok; }).length;
       if(failed>0){
         flash.textContent = '⚠ 일부 저장에 실패했어요('+failed+'/'+results.length+'). 다시 눌러주세요.';
