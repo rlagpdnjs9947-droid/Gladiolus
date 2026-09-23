@@ -307,6 +307,10 @@
     <div class="table-scroll">
       <table class="entry" id="entryTable"></table>
     </div>
+    <div style="display:flex; align-items:center; gap:10px; margin-block-start:10px">
+      <button class="btn primary" id="applyEntryBtn">입력 완료 · 추이에 반영</button>
+      <span class="hint" id="applyEntryFlash" style="opacity:0; transition:opacity .3s; color:var(--good)">✓ 반영했어요</span>
+    </div>
   </section>
 
   <section id="trends">
@@ -1008,6 +1012,33 @@
     state.settings.isExample = false;
     writeDoc('settings/main', {isExample:false});
     renderAll();
+  });
+
+  document.getElementById('applyEntryBtn').addEventListener('click', function(){
+    if(document.activeElement && document.activeElement.blur) document.activeElement.blur();
+    var inputs = document.querySelectorAll('#entryTable input[data-bind="exam"]');
+    var byRound = {};
+    inputs.forEach(function(inp){
+      var round = inp.dataset.round, subj = inp.dataset.subj, field = inp.dataset.field;
+      var raw = inp.value.trim();
+      if(field==='grade' && raw!==''){
+        var gnum = Number(raw);
+        if(isNaN(gnum) || gnum<1 || gnum>9){ raw=''; inp.value=''; }
+      }
+      var ex = state.exams[round] = state.exams[round] || {subjects:{}};
+      ex.subjects = ex.subjects || {};
+      ex.subjects[subj] = Object.assign({score:null,grade:null}, ex.subjects[subj]);
+      ex.subjects[subj][field] = raw;
+      byRound[round] = byRound[round] || {};
+      byRound[round][subj] = Object.assign({}, byRound[round][subj], ex.subjects[subj]);
+    });
+    Object.keys(byRound).forEach(function(round){
+      writeDoc('exams/'+round, {subjects: byRound[round]});
+    });
+    renderSummary(); renderAvgChart(); renderSubjChart(); renderGoals(); renderCards();
+    var flash = document.getElementById('applyEntryFlash');
+    flash.style.opacity = '1';
+    setTimeout(function(){ flash.style.opacity = '0'; }, 1600);
   });
 
   document.body.addEventListener('change', function(e){
