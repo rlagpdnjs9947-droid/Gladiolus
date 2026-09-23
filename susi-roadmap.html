@@ -1,0 +1,1083 @@
+<title>수시 로드맵</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@500;700&family=Noto+Sans+KR:wght@400;500;600;700&display=swap">
+<style>
+  :root{
+    color-scheme: light;
+    --bg:#e9edf3;
+    --card:#ffffff;
+    --card-2:#f4f6fa;
+    --ink:#10192b;
+    --ink-2:#46516a;
+    --ink-3:#7c8699;
+    --line:rgba(16,25,43,0.12);
+    --line-strong:rgba(16,25,43,0.22);
+    --accent:#9c6d1f;
+    --accent-ink:#6f4c12;
+    --accent-soft:#f6ead2;
+    --accent-soft-line:#e6c98c;
+    --good:#0ca30c;
+    --good-soft:#e3f6e2;
+    --critical:#d03b3b;
+    --critical-soft:#fbe6e6;
+    --unknown:#7c8699;
+    --unknown-soft:#eceef2;
+    --shadow: 0 1px 2px rgba(16,25,43,0.06), 0 8px 24px -12px rgba(16,25,43,0.18);
+    --s-kor:#2a78d6; --s-math:#eb6834; --s-eng:#1baf7a; --s-tam1:#eda100; --s-tam2:#e87ba4; --s-hist:#008300;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      color-scheme: dark;
+      --bg:#0b0f16;
+      --card:#141a24;
+      --card-2:#1a212d;
+      --ink:#eef1f6;
+      --ink-2:#b7c0d1;
+      --ink-3:#8891a3;
+      --line:rgba(238,241,246,0.14);
+      --line-strong:rgba(238,241,246,0.26);
+      --accent:#e2ac52;
+      --accent-ink:#f2c876;
+      --accent-soft:rgba(226,172,82,0.14);
+      --accent-soft-line:rgba(226,172,82,0.35);
+      --good:#22b955;
+      --good-soft:rgba(34,185,85,0.14);
+      --critical:#e2585a;
+      --critical-soft:rgba(226,88,90,0.16);
+      --unknown:#8891a3;
+      --unknown-soft:rgba(136,145,163,0.16);
+      --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 12px 28px -14px rgba(0,0,0,0.6);
+      --s-kor:#3987e5; --s-math:#d95926; --s-eng:#199e70; --s-tam1:#c98500; --s-tam2:#d55181; --s-hist:#2fb52f;
+    }
+  }
+  :root[data-theme="dark"]{
+    color-scheme: dark;
+    --bg:#0b0f16; --card:#141a24; --card-2:#1a212d; --ink:#eef1f6; --ink-2:#b7c0d1; --ink-3:#8891a3;
+    --line:rgba(238,241,246,0.14); --line-strong:rgba(238,241,246,0.26);
+    --accent:#e2ac52; --accent-ink:#f2c876; --accent-soft:rgba(226,172,82,0.14); --accent-soft-line:rgba(226,172,82,0.35);
+    --good:#22b955; --good-soft:rgba(34,185,85,0.14); --critical:#e2585a; --critical-soft:rgba(226,88,90,0.16);
+    --unknown:#8891a3; --unknown-soft:rgba(136,145,163,0.16);
+    --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 12px 28px -14px rgba(0,0,0,0.6);
+    --s-kor:#3987e5; --s-math:#d95926; --s-eng:#199e70; --s-tam1:#c98500; --s-tam2:#d55181; --s-hist:#2fb52f;
+  }
+
+  *{box-sizing:border-box}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:"Noto Sans KR",system-ui,-apple-system,"Segoe UI",sans-serif;
+    padding-inline:16px;
+    font-size:14px;
+    line-height:1.5;
+  }
+  h1,h2,h3{font-family:"Noto Serif KR",serif; font-weight:700; margin:0; text-wrap:balance}
+  .num{font-variant-numeric:tabular-nums}
+  a{color:inherit}
+
+  .page{max-width:920px; margin:0 auto; padding-block:18px 48px}
+
+  /* topbar */
+  .topbar{
+    position:sticky; top:env(safe-area-inset-top,0px); z-index:20;
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+    padding:12px 16px; margin-inline:-16px; margin-block-end:18px;
+    background:color-mix(in srgb, var(--bg) 86%, transparent);
+    backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--line);
+  }
+  .brand{display:flex; align-items:baseline; gap:8px}
+  .brand .mark{font-family:"Noto Serif KR",serif; font-weight:700; font-size:17px}
+  .brand .sub{font-size:11px; color:var(--ink-3)}
+  .tabs{display:flex; gap:2px; overflow-x:auto; scrollbar-width:none}
+  .tabs::-webkit-scrollbar{display:none}
+  .tabs button{
+    appearance:none; border:none; background:transparent; color:var(--ink-2);
+    font:inherit; font-size:12.5px; font-weight:600; padding:7px 10px; border-radius:8px;
+    white-space:nowrap; cursor:pointer;
+  }
+  .tabs button:hover{background:var(--card-2); color:var(--ink)}
+  .tabs button:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible{
+    outline:2px solid var(--accent); outline-offset:2px;
+  }
+
+  section{margin-block-end:34px; scroll-margin-top:64px}
+  .section-head{display:flex; align-items:baseline; justify-content:space-between; gap:10px; margin-block-end:12px}
+  .section-head h2{font-size:19px}
+  .section-head .hint{font-size:12px; color:var(--ink-3)}
+  .eyebrow{font-size:11px; font-weight:700; letter-spacing:.06em; color:var(--accent-ink); text-transform:uppercase}
+
+  /* banner */
+  .banner{
+    display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;
+    background:var(--accent-soft); border:1px solid var(--accent-soft-line); color:var(--accent-ink);
+    border-radius:12px; padding:10px 14px; margin-block-end:16px; font-size:12.5px;
+  }
+  .banner strong{font-weight:700}
+  .btn{
+    appearance:none; border:1px solid var(--line-strong); background:var(--card); color:var(--ink);
+    font:inherit; font-weight:600; font-size:12.5px; padding:7px 12px; border-radius:8px; cursor:pointer;
+  }
+  .btn:hover{border-color:var(--accent)}
+  .btn.primary{background:var(--ink); color:var(--bg); border-color:var(--ink)}
+  .btn.ghost{border-color:transparent; background:transparent}
+  .btn.small{padding:5px 9px; font-size:11.5px}
+
+  /* stat tiles */
+  .stat-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:10px}
+  @media (max-width:640px){.stat-grid{grid-template-columns:repeat(2,1fr)}}
+  .stat-tile{
+    background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px 14px 12px;
+    box-shadow:var(--shadow); display:flex; flex-direction:column; gap:6px; min-width:0;
+  }
+  .stat-tile .label{font-size:11.5px; color:var(--ink-3); font-weight:600}
+  .stat-tile .value{font-size:26px; font-weight:700; font-family:"Noto Serif KR",serif}
+  .stat-tile .value small{font-size:13px; font-weight:500; color:var(--ink-3); font-family:"Noto Sans KR",sans-serif}
+  .ring-wrap{display:flex; align-items:center; gap:10px}
+  .ring-wrap .value{font-size:20px}
+
+  /* cards */
+  .card-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:12px}
+  @media (max-width:760px){.card-grid{grid-template-columns:repeat(2,1fr)}}
+  @media (max-width:520px){.card-grid{grid-template-columns:1fr}}
+  .uni-card{
+    background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px;
+    box-shadow:var(--shadow); display:flex; flex-direction:column; gap:8px;
+  }
+  .uni-card .top{display:flex; align-items:flex-start; justify-content:space-between; gap:8px}
+  .uni-card .idx{font-size:11px; color:var(--ink-3); font-weight:700}
+  .uni-card h3{font-size:17px}
+  .uni-card .track{font-size:11.5px; color:var(--ink-2)}
+  .field label{display:block; font-size:10.5px; color:var(--ink-3); font-weight:700; letter-spacing:.02em; margin-block-end:3px}
+  .field input[type=text], .field textarea{
+    width:100%; border:1px solid var(--line); background:var(--card-2); color:var(--ink); border-radius:8px;
+    padding:7px 8px; font:inherit; font-size:12.5px; resize:vertical;
+  }
+  .field textarea{min-height:44px; line-height:1.4}
+  .pill{
+    display:inline-flex; align-items:center; gap:5px; font-size:11.5px; font-weight:700; padding:4px 10px;
+    border-radius:999px; width:fit-content;
+  }
+  .pill::before{content:""; width:6px; height:6px; border-radius:50%; background:currentColor}
+  .pill.met{background:var(--good-soft); color:var(--good)}
+  .pill.unmet{background:var(--critical-soft); color:var(--critical)}
+  .pill.unknown{background:var(--unknown-soft); color:var(--unknown)}
+  .status-reason{font-size:11px; color:var(--ink-3)}
+  details.rule{border-top:1px dashed var(--line); padding-top:8px; margin-top:2px}
+  details.rule summary{cursor:pointer; font-size:11.5px; font-weight:700; color:var(--ink-2); list-style:none}
+  details.rule summary::-webkit-details-marker{display:none}
+  details.rule summary::before{content:"▸ "; color:var(--ink-3)}
+  details.rule[open] summary::before{content:"▾ "}
+  .rule-body{display:flex; flex-direction:column; gap:8px; padding-top:8px}
+  .chip-row{display:flex; flex-wrap:wrap; gap:5px}
+  .chip{
+    display:inline-flex; align-items:center; gap:4px; border:1px solid var(--line); border-radius:999px;
+    padding:3px 9px; font-size:11.5px; cursor:pointer; background:var(--card-2); user-select:none;
+  }
+  .chip input{accent-color:var(--accent)}
+  .row2{display:grid; grid-template-columns:1fr 1fr; gap:8px}
+  .num-field{display:flex; align-items:center; gap:6px; font-size:11.5px; color:var(--ink-2)}
+  .num-field input[type=number]{
+    width:52px; border:1px solid var(--line); background:var(--card-2); color:var(--ink); border-radius:6px;
+    padding:5px 6px; font:inherit; font-variant-numeric:tabular-nums;
+  }
+  select{
+    border:1px solid var(--line); background:var(--card-2); color:var(--ink); border-radius:8px;
+    padding:6px 8px; font:inherit; font-size:12.5px;
+  }
+  .toggle-line{display:flex; align-items:center; gap:6px; font-size:11.5px; color:var(--ink-2)}
+  .toggle-line input{accent-color:var(--accent)}
+
+  /* table */
+  .table-scroll{overflow-x:auto; border:1px solid var(--line); border-radius:14px; background:var(--card); box-shadow:var(--shadow)}
+  table.entry{border-collapse:collapse; width:100%; min-width:680px}
+  table.entry th, table.entry td{border-bottom:1px solid var(--line); padding:8px 10px; text-align:center; white-space:nowrap}
+  table.entry thead th{
+    font-size:11.5px; color:var(--ink-3); font-weight:700; text-align:center; background:var(--card-2);
+    position:sticky; top:0;
+  }
+  table.entry th.rowhead, table.entry td.rowhead{
+    text-align:left; position:sticky; left:0; background:var(--card); font-weight:700; font-size:12.5px;
+    border-right:1px solid var(--line);
+  }
+  table.entry thead th.rowhead{background:var(--card-2)}
+  table.entry .swatch{display:inline-block; width:8px; height:8px; border-radius:2px; margin-inline-end:6px}
+  table.entry input[type=text]{
+    width:44px; border:1px solid var(--line); background:var(--card-2); color:var(--ink); border-radius:6px;
+    padding:5px 4px; font:inherit; font-size:12.5px; text-align:center; font-variant-numeric:tabular-nums;
+  }
+  table.entry input.subj-name{width:64px; font-weight:700}
+
+  /* charts */
+  .chart-card{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:16px; box-shadow:var(--shadow)}
+  .chart-head{display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; margin-block-end:6px}
+  .segmented{display:inline-flex; border:1px solid var(--line); border-radius:9px; padding:2px; background:var(--card-2)}
+  .segmented button{
+    appearance:none; border:none; background:transparent; color:var(--ink-2); font:inherit; font-weight:700;
+    font-size:11.5px; padding:5px 10px; border-radius:7px; cursor:pointer;
+  }
+  .segmented button.active{background:var(--card); color:var(--ink); box-shadow:0 1px 2px rgba(0,0,0,0.12)}
+  .legend{display:flex; flex-wrap:wrap; gap:6px; margin-block:8px 2px}
+  .legend .chip{opacity:1}
+  .legend .chip.off{opacity:.38}
+  .legend .dot{width:9px; height:9px; border-radius:50%; display:inline-block}
+  .viz-svg{width:100%; height:auto; overflow:visible; font-family:"Noto Sans KR",sans-serif}
+  .viz-svg text{fill:var(--ink-3)}
+  .viz-svg .grid{stroke:var(--line)}
+  .viz-svg .axis{stroke:var(--line-strong)}
+  .chart-wrap{position:relative}
+  .tooltip{
+    position:absolute; pointer-events:none; background:var(--ink); color:var(--bg); border-radius:10px;
+    padding:8px 10px; font-size:11.5px; box-shadow:var(--shadow); z-index:5; min-width:120px; opacity:0;
+    transition:opacity .08s ease; transform:translate(-50%,-100%); margin-top:-10px;
+  }
+  .tooltip.show{opacity:1}
+  .tooltip .t-round{font-weight:700; margin-block-end:4px; font-family:"Noto Serif KR",serif}
+  .tooltip .t-row{display:flex; align-items:center; gap:6px; justify-content:space-between; gap:10px}
+  .tooltip .t-row + .t-row{margin-top:2px}
+  .tooltip .dot{width:7px; height:7px; border-radius:50%; flex:none}
+  .empty-note{color:var(--ink-3); font-size:12.5px; padding:20px 6px; text-align:center}
+
+  /* goals */
+  .goal-list{display:flex; flex-direction:column; gap:10px}
+  .goal-row{
+    background:var(--card); border:1px solid var(--line); border-radius:12px; padding:10px 14px; box-shadow:var(--shadow);
+    display:grid; grid-template-columns:88px 1fr auto; align-items:center; gap:12px;
+  }
+  @media (max-width:520px){.goal-row{grid-template-columns:1fr; gap:6px}}
+  .goal-name{display:flex; align-items:center; gap:6px; font-weight:700; font-size:13px}
+  .goal-name .dot{width:9px; height:9px; border-radius:50%}
+  .gap-track{position:relative; height:8px; border-radius:999px; background:var(--card-2); border:1px solid var(--line)}
+  .gap-fill{position:absolute; inset-block:0; left:0; border-radius:999px}
+  .gap-target{position:absolute; top:-4px; width:2px; height:16px; background:var(--ink); border-radius:1px}
+  .gap-target::after{
+    content:"목표"; position:absolute; top:-15px; left:50%; transform:translateX(-50%); font-size:9.5px;
+    color:var(--ink-3); white-space:nowrap; font-weight:700;
+  }
+  .goal-figures{display:flex; align-items:center; gap:10px; font-size:12px; color:var(--ink-2); white-space:nowrap}
+  .goal-figures b{font-size:14px; color:var(--ink); font-variant-numeric:tabular-nums}
+  .goal-gap-label{font-weight:700}
+  .goal-gap-label.met{color:var(--good)}
+  .goal-gap-label.left{color:var(--critical)}
+  .goal-target-input{width:38px; border:1px solid var(--line); background:var(--card-2); color:var(--ink); border-radius:6px; padding:4px; text-align:center; font:inherit}
+  .avgset{display:flex; flex-wrap:wrap; gap:6px; margin-block-end:10px}
+
+  footer{margin-block-start:24px; padding-top:16px; border-top:1px solid var(--line); font-size:11.5px; color:var(--ink-3)}
+</style>
+
+<div class="page">
+  <div class="topbar">
+    <div class="brand">
+      <span class="mark">수시 로드맵</span>
+      <span class="sub">6개 대학 · 최저 &amp; 모의고사 추적</span>
+    </div>
+    <nav class="tabs" id="navTabs">
+      <button data-jump="summary">요약</button>
+      <button data-jump="cards">지원 대학</button>
+      <button data-jump="entry">성적 입력</button>
+      <button data-jump="trends">추이</button>
+      <button data-jump="goals">목표 달성도</button>
+    </nav>
+  </div>
+
+  <div class="banner" id="exampleBanner" hidden>
+    <span><strong>예시 데이터</strong>가 표시되어 있어요. 실제 성적을 입력하려면 먼저 초기화하세요.</span>
+    <button class="btn primary small" id="clearExampleBtn">예시 지우고 시작하기</button>
+  </div>
+
+  <section id="summary">
+    <div class="section-head">
+      <h2>요약</h2>
+      <span class="hint">최신 응시 성적 기준</span>
+    </div>
+    <div class="stat-grid" id="statGrid"></div>
+  </section>
+
+  <section id="cards">
+    <div class="section-head">
+      <h2>지원 대학 · 수능 최저</h2>
+      <span class="hint">한림대 → 충남대 → 을지대 → 건국대글로컬 → 건양대 → 충북대</span>
+    </div>
+    <div class="card-grid" id="cardGrid"></div>
+  </section>
+
+  <section id="entry">
+    <div class="section-head">
+      <h2>모의고사 성적 입력</h2>
+      <span class="hint">점수(원점수) · 등급을 회차별로 입력하세요</span>
+    </div>
+    <div class="table-scroll">
+      <table class="entry" id="entryTable"></table>
+    </div>
+  </section>
+
+  <section id="trends">
+    <div class="section-head">
+      <h2>성적 추이</h2>
+      <span class="hint">목표까지 얼마나 가까워졌는지 한눈에</span>
+    </div>
+
+    <div class="chart-card" style="margin-block-end:12px">
+      <div class="chart-head">
+        <div><span class="eyebrow">평균 등급</span></div>
+      </div>
+      <div class="avgset" id="avgSubjectPicker"></div>
+      <div class="chart-wrap" id="avgChartWrap"></div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-head">
+        <div><span class="eyebrow">과목별 추이</span></div>
+        <div class="segmented" id="modeToggle">
+          <button data-mode="grade" class="active">등급</button>
+          <button data-mode="score">원점수</button>
+        </div>
+      </div>
+      <div class="legend" id="subjectLegend"></div>
+      <div class="chart-wrap" id="subjChartWrap"></div>
+    </div>
+  </section>
+
+  <section id="goals">
+    <div class="section-head">
+      <h2>목표 달성도</h2>
+      <span class="hint">과목별 목표 등급 대비 현재 위치</span>
+    </div>
+    <div class="goal-list" id="goalList"></div>
+  </section>
+
+  <footer>
+    대학별 수능 최저학력기준은 매년 바뀌므로 반드시 각 대학 모집요강 원문으로 다시 확인하세요. 이 페이지의 자동 판정은 카드에서 직접 설정한 조건에 따른 참고용 계산입니다. 입력한 데이터는 이 아티팩트에 안전하게 저장되어 다시 열어도 유지됩니다.
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var ROUNDS = [
+    {id:'r1', label:'7월 전대실모', short:'7월'},
+    {id:'r2', label:'8월 전대실모', short:'8월'},
+    {id:'r3', label:'9월 평가원', short:'9평'},
+    {id:'r4', label:'9월 더프', short:'9더프'},
+    {id:'r5', label:'10월 전대실모', short:'10월'},
+    {id:'r6', label:'11월 전대실모', short:'11월'}
+  ];
+  var UNIS = [
+    {id:'u1', name:'한림대'},
+    {id:'u2', name:'충남대'},
+    {id:'u3', name:'을지대'},
+    {id:'u4', name:'건국대글로컬'},
+    {id:'u5', name:'건양대'},
+    {id:'u6', name:'충북대'}
+  ];
+  var SUBJ_BASE = [
+    {id:'kor', name:'국어', fixed:true},
+    {id:'math', name:'수학', fixed:true},
+    {id:'eng', name:'영어', fixed:true},
+    {id:'tam1', name:'탐구1', fixed:false},
+    {id:'tam2', name:'탐구2', fixed:false},
+    {id:'hist', name:'한국사', fixed:true}
+  ];
+
+  var state = {
+    cards:{}, exams:{}, goals:{}, settings:{},
+    ready:false,
+    mode:'grade',
+    visible:{kor:true,math:true,eng:true,tam1:true,tam2:true,hist:true},
+    pinnedRound:null,
+    openCards:new Set()
+  };
+
+  var db = null;
+
+  function subjColor(id){ return getComputedStyle(document.documentElement).getPropertyValue('--s-'+id).trim(); }
+  function subjName(id){
+    if(id==='tam1') return (state.settings.tam1Name || '탐구1');
+    if(id==='tam2') return (state.settings.tam2Name || '탐구2');
+    var b = SUBJ_BASE.filter(function(s){return s.id===id})[0];
+    return b ? b.name : id;
+  }
+  function esc(s){
+    return String(s==null?'':s).replace(/[&<>"']/g, function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+
+  function num(v){
+    if(v===undefined || v===null || v==='') return null;
+    var n = Number(v);
+    return isNaN(n) ? null : n;
+  }
+
+  // ---------- data access helpers ----------
+  function examSubj(roundId, subjId){
+    var ex = state.exams[roundId];
+    if(!ex || !ex.subjects || !ex.subjects[subjId]) return {score:null, grade:null};
+    var s = ex.subjects[subjId];
+    return {score: num(s.score), grade: num(s.grade)};
+  }
+  function latestGrade(subjId){
+    for(var i=ROUNDS.length-1;i>=0;i--){
+      var v = examSubj(ROUNDS[i].id, subjId).grade;
+      if(v!=null) return v;
+    }
+    return null;
+  }
+  function roundAverage(roundId, subjectIds){
+    var vals = [];
+    subjectIds.forEach(function(s){
+      var g = examSubj(roundId, s).grade;
+      if(g!=null) vals.push(g);
+    });
+    if(!vals.length) return null;
+    var sum = vals.reduce(function(a,b){return a+b;},0);
+    return sum/vals.length;
+  }
+
+  function defaultCard(){
+    return {track:'', minReqText:'', manualStatus:'unknown',
+      rule:{enabled:false, subjects:['kor','math','eng','tam1','tam2'], count:2, maxSum:6,
+            engMode:'include', engMax:2, histEnabled:false, histMax:4}};
+  }
+  function cardOf(id){
+    var c = state.cards[id] || {};
+    var d = defaultCard();
+    var rule = Object.assign({}, d.rule, c.rule||{});
+    return Object.assign({}, d, c, {rule:rule});
+  }
+  function defaultGoals(){ return {kor:2, math:2, eng:2, tam1:2, tam2:2, hist:2, avgSubjects:['kor','math','eng','tam1','tam2']}; }
+  function goalsState(){ return Object.assign({}, defaultGoals(), state.goals); }
+
+  function computeCardStatus(card){
+    if(!card.rule.enabled){
+      return {status: card.manualStatus || 'unknown', reason:'수동 설정'};
+    }
+    var r = card.rule;
+    var reasonParts = [];
+    var poolIds = (r.subjects||[]).filter(function(s){ return !(s==='eng' && r.engMode==='separate'); });
+    var poolVals = poolIds.map(function(s){ return {id:s, g:latestGrade(s)}; }).filter(function(x){return x.g!=null;});
+    var poolStatus = 'unknown', poolSum = null;
+    if(poolVals.length >= r.count && r.count>0){
+      poolVals.sort(function(a,b){return a.g-b.g;});
+      var chosen = poolVals.slice(0, r.count);
+      poolSum = chosen.reduce(function(a,b){return a+b.g;},0);
+      poolStatus = poolSum <= r.maxSum ? 'met' : 'unmet';
+      reasonParts.push(chosen.map(function(c){return subjName(c.id)+' '+c.g;}).join('+')+'='+poolSum+' (기준 '+r.maxSum+' 이내)');
+    } else if(r.count>0){
+      reasonParts.push('반영 과목 성적 부족');
+    }
+
+    var engStatus = 'met';
+    if(r.engMode==='separate'){
+      var eg = latestGrade('eng');
+      if(eg==null){ engStatus='unknown'; reasonParts.push('영어 성적 미입력'); }
+      else { engStatus = eg<=r.engMax ? 'met':'unmet'; reasonParts.push('영어 '+eg+'등급 (기준 '+r.engMax+' 이내)'); }
+    }
+
+    var histStatus = 'met';
+    if(r.histEnabled){
+      var hg = latestGrade('hist');
+      if(hg==null){ histStatus='unknown'; reasonParts.push('한국사 성적 미입력'); }
+      else { histStatus = hg<=r.histMax ? 'met':'unmet'; reasonParts.push('한국사 '+hg+'등급 (기준 '+r.histMax+' 이내)'); }
+    }
+
+    var all = [poolStatus, engStatus, histStatus];
+    var status = 'met';
+    if(all.indexOf('unknown')>=0) status='unknown';
+    else if(all.indexOf('unmet')>=0) status='unmet';
+    return {status:status, reason: reasonParts.join(' · ')};
+  }
+
+  var STATUS_LABEL = {met:'충족', unmet:'미충족', unknown:'미정'};
+
+  // ---------- write helpers ----------
+  var writeChain = {};
+  function writeDoc(path, data){
+    var prev = writeChain[path] || Promise.resolve();
+    var next = prev.then(function(){ return updateSafe(path, data); })
+      .catch(function(e){ console.warn('write failed', path, e); });
+    writeChain[path] = next;
+    return next;
+  }
+  function updateSafe(path, data){
+    return db.doc(path).get().then(function(snap){
+      if(snap.exists){ return db.doc(path).update(data); }
+      return db.doc(path).set(data);
+    });
+  }
+
+  // ---------- rendering ----------
+  function renderAll(){
+    renderBanner();
+    renderSummary();
+    renderCards();
+    renderEntryTable();
+    renderAvgSubjectPicker();
+    renderAvgChart();
+    renderSubjectLegend();
+    renderSubjChart();
+    renderGoals();
+  }
+
+  function renderBanner(){
+    var b = document.getElementById('exampleBanner');
+    b.hidden = state.settings.isExample === false;
+  }
+
+  function renderSummary(){
+    var goals = goalsState();
+    var avgIds = goals.avgSubjects && goals.avgSubjects.length ? goals.avgSubjects : ['kor','math','eng','tam1','tam2'];
+    var lastRoundWithData = null;
+    for(var i=ROUNDS.length-1;i>=0;i--){
+      if(roundAverage(ROUNDS[i].id, avgIds)!=null){ lastRoundWithData = ROUNDS[i].id; break; }
+    }
+    var curAvg = lastRoundWithData ? roundAverage(lastRoundWithData, avgIds) : null;
+    var targetAvg = avgIds.reduce(function(a,s){return a+num(goals[s]);},0) / avgIds.length;
+
+    var metCount = 0, unmetCount=0, unknownCount=0;
+    UNIS.forEach(function(u){
+      var st = computeCardStatus(cardOf(u.id)).status;
+      if(st==='met') metCount++; else if(st==='unmet') unmetCount++; else unknownCount++;
+    });
+
+    // closeness: how close current avg is to target (1 = reached or beat target)
+    var closeness = curAvg==null ? null : Math.max(0, Math.min(1, curAvg<=targetAvg ? 1 : targetAvg/curAvg));
+
+    var ringPct = closeness==null ? 0 : closeness;
+    var C = 2*Math.PI*15.9155;
+    var dash = (ringPct*C).toFixed(1)+' '+C.toFixed(1);
+
+    var html = '';
+    html += '<div class="stat-tile"><div class="label">충족 대학</div><div class="value">'+metCount+'<small>/'+UNIS.length+'</small></div>'+
+            '<div class="hint" style="font-size:11px;color:var(--ink-3)">미충족 '+unmetCount+' · 미정 '+unknownCount+'</div></div>';
+    html += '<div class="stat-tile"><div class="label">최근 평균 등급</div><div class="value">'+(curAvg==null?'-':curAvg.toFixed(2))+'<small>등급</small></div>'+
+            '<div class="hint" style="font-size:11px;color:var(--ink-3)">'+(lastRoundWithData? ROUNDS.filter(function(r){return r.id===lastRoundWithData})[0].label : '데이터 없음')+'</div></div>';
+    html += '<div class="stat-tile"><div class="label">목표 평균 등급</div><div class="value">'+targetAvg.toFixed(2)+'<small>등급</small></div>'+
+            '<div class="hint" style="font-size:11px;color:var(--ink-3)">'+(curAvg==null?'입력 대기':(curAvg<=targetAvg? '목표 달성' : (curAvg-targetAvg).toFixed(2)+'등급 남음'))+'</div></div>';
+    html += '<div class="stat-tile"><div class="label">목표 도달률</div>'+
+            '<div class="ring-wrap"><svg width="46" height="46" viewBox="0 0 36 36">'+
+              '<circle cx="18" cy="18" r="15.9155" fill="none" stroke="var(--card-2)" stroke-width="4"></circle>'+
+              '<circle cx="18" cy="18" r="15.9155" fill="none" stroke="'+(closeness!=null && closeness>=1?'var(--good)':'var(--accent)')+'" stroke-width="4" stroke-linecap="round" stroke-dasharray="'+dash+'" transform="rotate(-90 18 18)"></circle>'+
+            '</svg><div class="value">'+(closeness==null?'-':Math.round(closeness*100)+'%')+'</div></div></div>';
+    document.getElementById('statGrid').innerHTML = html;
+  }
+
+  function renderCards(){
+    var html = '';
+    UNIS.forEach(function(u, idx){
+      var card = cardOf(u.id);
+      var st = computeCardStatus(card);
+      var r = card.rule;
+      html += '<div class="uni-card">';
+      html += '  <div class="top"><div><div class="idx">지망 '+(idx+1)+'</div><h3>'+esc(u.name)+'</h3></div>'+
+              '  <span class="pill '+st.status+'">'+STATUS_LABEL[st.status]+'</span></div>';
+      html += '  <div class="field"><label>전형명</label><input type="text" data-bind="card" data-uni="'+u.id+'" data-field="track" value="'+esc(card.track)+'" placeholder="예: 학생부교과전형"></div>';
+      html += '  <div class="field"><label>수능 최저학력기준 (원문)</label><textarea data-bind="card" data-uni="'+u.id+'" data-field="minReqText" placeholder="예: 국,수,영,탐(1) 중 2개 합 6 이내">'+esc(card.minReqText)+'</textarea></div>';
+      if(st.reason) html += '  <div class="status-reason">'+esc(st.reason)+'</div>';
+
+      html += '  <details class="rule" data-uni="'+u.id+'"><summary>최저 충족 자동 판정 설정</summary><div class="rule-body">';
+      html += '    <label class="toggle-line"><input type="checkbox" data-bind="cardrule" data-uni="'+u.id+'" data-field="enabled" '+(r.enabled?'checked':'')+'> 자동 판정 사용</label>';
+      if(!r.enabled){
+        html += '    <div class="field"><label>수동 판정</label><select data-bind="card" data-uni="'+u.id+'" data-field="manualStatus">'+
+          ['unknown','met','unmet'].map(function(v){return '<option value="'+v+'" '+(card.manualStatus===v?'selected':'')+'>'+STATUS_LABEL[v]+'</option>';}).join('')+
+          '</select></div>';
+      } else {
+        html += '    <div><label style="display:block;font-size:10.5px;color:var(--ink-3);font-weight:700;margin-block-end:4px">합산 반영 과목</label><div class="chip-row">';
+        ['kor','math','eng','tam1','tam2'].forEach(function(sid){
+          if(sid==='eng' && r.engMode!=='include') return;
+          var checked = r.subjects.indexOf(sid)>=0;
+          html += '<label class="chip"><input type="checkbox" data-bind="cardrulesubj" data-uni="'+u.id+'" data-subj="'+sid+'" '+(checked?'checked':'')+'>'+subjName(sid)+'</label>';
+        });
+        html += '    </div></div>';
+        html += '    <div class="row2">'+
+          '<div class="num-field">반영 개수<input type="number" min="1" max="5" data-bind="cardrule" data-uni="'+u.id+'" data-field="count" value="'+r.count+'"></div>'+
+          '<div class="num-field">합 기준(이내)<input type="number" min="1" max="45" data-bind="cardrule" data-uni="'+u.id+'" data-field="maxSum" value="'+r.maxSum+'"></div>'+
+        '</div>';
+        html += '    <label class="toggle-line"><input type="checkbox" data-bind="cardrule" data-uni="'+u.id+'" data-field="engModeCheck" '+(r.engMode==='separate'?'checked':'')+'> 영어 별도 기준(등급 상한)</label>';
+        if(r.engMode==='separate'){
+          html += '    <div class="num-field">영어 등급 기준(이내)<input type="number" min="1" max="9" data-bind="cardrule" data-uni="'+u.id+'" data-field="engMax" value="'+r.engMax+'"></div>';
+        }
+        html += '    <label class="toggle-line"><input type="checkbox" data-bind="cardrule" data-uni="'+u.id+'" data-field="histEnabled" '+(r.histEnabled?'checked':'')+'> 한국사 등급 기준</label>';
+        if(r.histEnabled){
+          html += '    <div class="num-field">한국사 등급 기준(이내)<input type="number" min="1" max="9" data-bind="cardrule" data-uni="'+u.id+'" data-field="histMax" value="'+r.histMax+'"></div>';
+        }
+      }
+      html += '  </div></details>';
+      html += '</div>';
+    });
+    document.getElementById('cardGrid').innerHTML = html;
+    document.querySelectorAll('#cardGrid details.rule').forEach(function(d){
+      d.open = state.openCards.has(d.dataset.uni);
+    });
+  }
+
+  function renderEntryTable(){
+    var thead = '<thead><tr><th class="rowhead">과목</th>' + ROUNDS.map(function(r){return '<th colspan="2">'+esc(r.label)+'</th>';}).join('') + '</tr>' +
+      '<tr><th class="rowhead"></th>' + ROUNDS.map(function(){return '<th style="font-weight:400">점수</th><th style="font-weight:400">등급</th>';}).join('') + '</tr></thead>';
+    var body = '<tbody>';
+    SUBJ_BASE.forEach(function(s){
+      var nameCell = s.fixed
+        ? '<span class="swatch" style="background:'+subjColor(s.id)+'"></span>'+esc(s.name)
+        : '<span class="swatch" style="background:'+subjColor(s.id)+'"></span><input type="text" class="subj-name" data-bind="subjname" data-subj="'+s.id+'" value="'+esc(subjName(s.id))+'">';
+      body += '<tr><td class="rowhead">'+nameCell+'</td>';
+      ROUNDS.forEach(function(r){
+        var v = examSubj(r.id, s.id);
+        body += '<td><input type="text" inputmode="decimal" data-bind="exam" data-round="'+r.id+'" data-subj="'+s.id+'" data-field="score" value="'+(v.score==null?'':v.score)+'" placeholder="-"></td>';
+        body += '<td><input type="text" inputmode="numeric" maxlength="1" data-bind="exam" data-round="'+r.id+'" data-subj="'+s.id+'" data-field="grade" value="'+(v.grade==null?'':v.grade)+'" placeholder="-"></td>';
+      });
+      body += '</tr>';
+    });
+    body += '</tbody>';
+    document.getElementById('entryTable').innerHTML = thead + body;
+  }
+
+  function renderAvgSubjectPicker(){
+    var goals = goalsState();
+    var html = SUBJ_BASE.map(function(s){
+      var on = goals.avgSubjects.indexOf(s.id)>=0;
+      return '<label class="chip"><input type="checkbox" data-bind="avgset" data-subj="'+s.id+'" '+(on?'checked':'')+'>'+subjName(s.id)+'</label>';
+    }).join('');
+    document.getElementById('avgSubjectPicker').innerHTML = html + '<span style="font-size:11px;color:var(--ink-3);align-self:center">평균에 포함할 과목</span>';
+  }
+
+  // ---- SVG chart building ----
+  function svgEl(tag, attrs){
+    var e = document.createElementNS('http://www.w3.org/2000/svg', tag);
+    for(var k in attrs) e.setAttribute(k, attrs[k]);
+    return e;
+  }
+
+  function renderAvgChart(){
+    var wrap = document.getElementById('avgChartWrap');
+    var goals = goalsState();
+    var avgIds = goals.avgSubjects && goals.avgSubjects.length ? goals.avgSubjects : ['kor','math','eng','tam1','tam2'];
+    var targetAvg = avgIds.reduce(function(a,s){return a+num(goals[s]);},0) / avgIds.length;
+    var pts = ROUNDS.map(function(r){ return {id:r.id, label:r.label, short:r.short, v: roundAverage(r.id, avgIds)}; });
+    var hasAny = pts.some(function(p){return p.v!=null;});
+    wrap.innerHTML = '';
+    if(!hasAny){
+      wrap.innerHTML = '<div class="empty-note">아직 입력된 성적이 없습니다. "성적 입력" 표에서 등급을 입력하면 평균 등급 추이가 표시됩니다.</div>';
+      return;
+    }
+    var W=680,H=220,padL=34,padR=16,padT=16,padB=30;
+    var vals = pts.map(function(p){return p.v;}).filter(function(v){return v!=null;}).concat([targetAvg]);
+    var domMin = Math.max(1, Math.floor(Math.min.apply(null, vals))-0.5);
+    var domMax = Math.min(9, Math.ceil(Math.max.apply(null, vals))+0.5);
+    if(domMax-domMin < 2){ domMax = domMin+2; }
+    var x = function(i){ return padL + i*( (W-padL-padR) / (ROUNDS.length-1) ); };
+    var y = function(v){ return padT + (v-domMin)/(domMax-domMin) * (H-padT-padB); };
+
+    var svg = svgEl('svg',{viewBox:'0 0 '+W+' '+H, class:'viz-svg', role:'img', 'aria-label':'평균 등급 추이'});
+
+    // gridlines
+    for(var gi=Math.ceil(domMin); gi<=Math.floor(domMax); gi++){
+      var gy = y(gi);
+      svg.appendChild(svgEl('line',{x1:padL,x2:W-padR,y1:gy,y2:gy,class:'grid','stroke-width':1}));
+      var lbl = svgEl('text',{x:padL-8, y:gy+3, 'font-size':10, 'text-anchor':'end'});
+      lbl.textContent = gi+'등급';
+      svg.appendChild(lbl);
+    }
+    // target line
+    var ty = y(targetAvg);
+    var tline = svgEl('line',{x1:padL,x2:W-padR,y1:ty,y2:ty,stroke:'var(--ink-3)','stroke-width':1.5,'stroke-dasharray':'4 4'});
+    svg.appendChild(tline);
+    var tlabel = svgEl('text',{x:W-padR, y:ty-6, 'font-size':10.5, 'text-anchor':'end', 'font-weight':700});
+    tlabel.setAttribute('fill','var(--ink-2)');
+    tlabel.textContent = '목표 '+targetAvg.toFixed(2)+'등급';
+    svg.appendChild(tlabel);
+
+    // area + line, segment-aware (skip nulls)
+    var segs = [];
+    var cur = [];
+    pts.forEach(function(p,i){
+      if(p.v==null){ if(cur.length) segs.push(cur); cur=[]; }
+      else cur.push({i:i,v:p.v});
+    });
+    if(cur.length) segs.push(cur);
+
+    segs.forEach(function(seg){
+      if(seg.length>1){
+        var top = seg.map(function(p){return x(p.i)+','+y(p.v);}).join(' L ');
+        var areaD = 'M '+x(seg[0].i)+','+(H-padB)+' L '+top+' L '+x(seg[seg.length-1].i)+','+(H-padB)+' Z';
+        svg.appendChild(svgEl('path',{d:areaD, fill:'var(--s-kor)', opacity:0.10, stroke:'none'}));
+        svg.appendChild(svgEl('path',{d:'M '+top, fill:'none', stroke:'var(--s-kor)', 'stroke-width':2.5, 'stroke-linecap':'round','stroke-linejoin':'round'}));
+      }
+      seg.forEach(function(p){
+        svg.appendChild(svgEl('circle',{cx:x(p.i), cy:y(p.v), r:4.5, fill:'var(--s-kor)', stroke:'var(--card)', 'stroke-width':2}));
+      });
+    });
+    // endpoint label
+    var lastPt = null;
+    for(var pi=pts.length-1;pi>=0;pi--){ if(pts[pi].v!=null){ lastPt=pts[pi]; lastPt.idx=pi; break; } }
+    if(lastPt){
+      var elabel = svgEl('text',{x:x(lastPt.idx)+8, y:y(lastPt.v)+4, 'font-size':11.5, 'font-weight':700});
+      elabel.setAttribute('fill','var(--ink)');
+      elabel.textContent = lastPt.v.toFixed(2);
+      svg.appendChild(elabel);
+    }
+
+    // x axis labels + hit areas
+    var bandW = (W-padL-padR)/ROUNDS.length;
+    pts.forEach(function(p,i){
+      var lbl = svgEl('text',{x:x(i), y:H-8, 'font-size':10.5, 'text-anchor':'middle'});
+      lbl.textContent = p.short;
+      svg.appendChild(lbl);
+      var hit = svgEl('rect',{x:padL+i*bandW - (i===0?padL:0), y:0, width:bandW + (i===0?padL:(i===ROUNDS.length-1?padR:0)), height:H, fill:'transparent'});
+      hit.dataset.round = p.id;
+      svg.appendChild(hit);
+    });
+
+    wrap.appendChild(svg);
+    var tooltip = document.createElement('div');
+    tooltip.className = 'tooltip';
+    wrap.appendChild(tooltip);
+
+    attachHover(svg, wrap, tooltip, x, pts, function(p){
+      var rows = '<div class="t-row"><span><span class="dot" style="background:var(--s-kor)"></span>평균</span><b class="num">'+(p.v==null?'-':p.v.toFixed(2)+'등급')+'</b></div>';
+      return {round: p.label, rowsHtml: rows};
+    });
+  }
+
+  function renderSubjectLegend(){
+    var html = SUBJ_BASE.map(function(s){
+      var on = state.visible[s.id];
+      return '<span class="chip legend-chip '+(on?'':'off')+'" data-subj="'+s.id+'"><span class="dot" style="background:'+subjColor(s.id)+'"></span>'+subjName(s.id)+'</span>';
+    }).join('');
+    document.getElementById('subjectLegend').innerHTML = html;
+  }
+
+  function renderSubjChart(){
+    var wrap = document.getElementById('subjChartWrap');
+    var mode = state.mode;
+    var activeSubjects = SUBJ_BASE.filter(function(s){return state.visible[s.id];});
+    var anyData = ROUNDS.some(function(r){
+      return SUBJ_BASE.some(function(s){ return examSubj(r.id,s.id)[mode==='grade'?'grade':'score']!=null; });
+    });
+    wrap.innerHTML='';
+    if(!anyData){
+      wrap.innerHTML = '<div class="empty-note">아직 입력된 성적이 없습니다. "성적 입력" 표에서 '+(mode==='grade'?'등급':'점수')+'을 입력하면 그래프가 표시됩니다.</div>';
+      return;
+    }
+    var W=680,H=260,padL=34,padR=16,padT=16,padB=30;
+    var x = function(i){ return padL + i*( (W-padL-padR) / (ROUNDS.length-1) ); };
+
+    var domMin, domMax;
+    if(mode==='grade'){
+      var gvals=[];
+      activeSubjects.forEach(function(s){ ROUNDS.forEach(function(r){ var v=examSubj(r.id,s.id).grade; if(v!=null) gvals.push(v); }); });
+      if(!gvals.length) gvals=[1,9];
+      domMin = Math.max(1, Math.floor(Math.min.apply(null,gvals))-0.5);
+      domMax = Math.min(9, Math.ceil(Math.max.apply(null,gvals))+0.5);
+      if(domMax-domMin<2) domMax=domMin+2;
+    } else {
+      var svals=[];
+      activeSubjects.forEach(function(s){ ROUNDS.forEach(function(r){ var v=examSubj(r.id,s.id).score; if(v!=null) svals.push(v); }); });
+      if(!svals.length) svals=[0,100];
+      domMin = Math.max(0, Math.floor(Math.min.apply(null,svals)/5)*5-5);
+      domMax = Math.ceil(Math.max.apply(null,svals)/5)*5+5;
+      if(domMax-domMin<10) domMax=domMin+10;
+    }
+    var y = function(v){
+      var t = (v-domMin)/(domMax-domMin);
+      return mode==='grade' ? (padT + t*(H-padT-padB)) : (padT + (1-t)*(H-padT-padB));
+    };
+
+    var svg = svgEl('svg',{viewBox:'0 0 '+W+' '+H, class:'viz-svg', role:'img', 'aria-label':'과목별 '+(mode==='grade'?'등급':'점수')+' 추이'});
+
+    if(mode==='grade'){
+      for(var gi=Math.ceil(domMin); gi<=Math.floor(domMax); gi++){
+        var gy=y(gi);
+        svg.appendChild(svgEl('line',{x1:padL,x2:W-padR,y1:gy,y2:gy,class:'grid','stroke-width':1}));
+        var lbl=svgEl('text',{x:padL-8,y:gy+3,'font-size':10,'text-anchor':'end'}); lbl.textContent=gi+'등급'; svg.appendChild(lbl);
+      }
+    } else {
+      var step = (domMax-domMin)/4;
+      for(var s5=0;s5<=4;s5++){
+        var val = domMin + step*s5;
+        var gy2 = y(val);
+        svg.appendChild(svgEl('line',{x1:padL,x2:W-padR,y1:gy2,y2:gy2,class:'grid','stroke-width':1}));
+        var lbl2=svgEl('text',{x:padL-8,y:gy2+3,'font-size':10,'text-anchor':'end'}); lbl2.textContent=Math.round(val); svg.appendChild(lbl2);
+      }
+    }
+
+    var showEndLabel = activeSubjects.length<=3;
+    activeSubjects.forEach(function(s){
+      var color = subjColor(s.id);
+      var pts = ROUNDS.map(function(r,i){
+        var v = examSubj(r.id, s.id)[mode];
+        return {i:i, v:v};
+      });
+      var segs=[], cur=[];
+      pts.forEach(function(p){ if(p.v==null){ if(cur.length) segs.push(cur); cur=[]; } else cur.push(p); });
+      if(cur.length) segs.push(cur);
+      segs.forEach(function(seg){
+        if(seg.length>1){
+          var d = 'M '+seg.map(function(p){return x(p.i)+','+y(p.v);}).join(' L ');
+          svg.appendChild(svgEl('path',{d:d, fill:'none', stroke:color, 'stroke-width':2.25, 'stroke-linecap':'round','stroke-linejoin':'round'}));
+        }
+        seg.forEach(function(p){
+          svg.appendChild(svgEl('circle',{cx:x(p.i), cy:y(p.v), r:3.6, fill:color, stroke:'var(--card)', 'stroke-width':1.6}));
+        });
+      });
+      if(showEndLabel){
+        var last=null;
+        for(var li=pts.length-1;li>=0;li--){ if(pts[li].v!=null){ last=pts[li]; break; } }
+        if(last){
+          var et = svgEl('text',{x:x(last.i)+7, y:y(last.v)+3.5, 'font-size':10.5, 'font-weight':700});
+          et.setAttribute('fill', color);
+          et.textContent = subjName(s.id);
+          svg.appendChild(et);
+        }
+      }
+    });
+
+    var bandW=(W-padL-padR)/ROUNDS.length;
+    ROUNDS.forEach(function(r,i){
+      var lbl=svgEl('text',{x:x(i), y:H-8, 'font-size':10.5, 'text-anchor':'middle'}); lbl.textContent=r.short; svg.appendChild(lbl);
+      var hit = svgEl('rect',{x:padL+i*bandW - (i===0?padL:0), y:0, width:bandW + (i===0?padL:(i===ROUNDS.length-1?padR:0)), height:H, fill:'transparent'});
+      hit.dataset.round=r.id;
+      svg.appendChild(hit);
+    });
+
+    wrap.appendChild(svg);
+    var tooltip=document.createElement('div'); tooltip.className='tooltip'; wrap.appendChild(tooltip);
+    var ptsForHover = ROUNDS.map(function(r){return {id:r.id, label:r.label};});
+    attachHover(svg, wrap, tooltip, x, ptsForHover, function(p){
+      var rows = activeSubjects.map(function(s){
+        var v = examSubj(p.id, s.id)[mode];
+        var disp = v==null ? '-' : (mode==='grade' ? v+'등급' : String(v));
+        return '<div class="t-row"><span><span class="dot" style="background:'+subjColor(s.id)+'"></span>'+subjName(s.id)+'</span><b class="num">'+disp+'</b></div>';
+      }).join('');
+      return {round:p.label, rowsHtml: rows || '<div class="t-row" style="color:var(--ink-3)">데이터 없음</div>'};
+    });
+  }
+
+  function attachHover(svg, wrap, tooltip, xFn, pts, buildContent){
+    var hits = svg.querySelectorAll('rect[data-round]');
+    function showFor(idx){
+      var p = pts[idx];
+      if(!p) return;
+      var content = buildContent(p);
+      tooltip.innerHTML = '<div class="t-round">'+esc(content.round)+'</div>' + content.rowsHtml;
+      var svgRect = svg.getBoundingClientRect();
+      var scale = svgRect.width / svg.viewBox.baseVal.width;
+      var px = xFn(idx) * scale;
+      tooltip.style.left = px + 'px';
+      tooltip.style.top = '0px';
+      tooltip.classList.add('show');
+    }
+    hits.forEach(function(h, idx){
+      h.addEventListener('mouseenter', function(){ showFor(idx); });
+      h.addEventListener('mousemove', function(){ showFor(idx); });
+      h.addEventListener('mouseleave', function(){ if(!state.pinnedRound) tooltip.classList.remove('show'); });
+      h.addEventListener('click', function(){
+        if(state.pinnedRound===h.dataset.round){ state.pinnedRound=null; tooltip.classList.remove('show'); }
+        else { state.pinnedRound=h.dataset.round; showFor(idx); }
+      });
+    });
+  }
+
+  function renderGoals(){
+    var goals = goalsState();
+    var html = SUBJ_BASE.map(function(s){
+      var cur = latestGrade(s.id);
+      var target = num(goals[s.id]) || 2;
+      var color = subjColor(s.id);
+      var pct = cur==null ? 0 : Math.max(0, Math.min(100, (1 - (cur-1)/8) * 100));
+      var tpct = Math.max(0, Math.min(100, (1 - (target-1)/8) * 100));
+      var gapText, gapClass;
+      if(cur==null){ gapText='입력 대기'; gapClass=''; }
+      else if(cur<=target){ gapText='목표 달성'; gapClass='met'; }
+      else { gapText=(cur-target)+'등급 남음'; gapClass='left'; }
+      return '<div class="goal-row">'+
+        '<div class="goal-name"><span class="dot" style="background:'+color+'"></span>'+subjName(s.id)+'</div>'+
+        '<div class="gap-track"><div class="gap-fill" style="width:'+pct+'%; background:'+color+'; opacity:.7"></div><div class="gap-target" style="left:'+tpct+'%"></div></div>'+
+        '<div class="goal-figures"><span>현재 <b>'+(cur==null?'-':cur+'등급')+'</b></span>'+
+        '<span>목표 <input type="number" min="1" max="9" class="goal-target-input" data-bind="goal" data-subj="'+s.id+'" value="'+target+'"></span>'+
+        '<span class="goal-gap-label '+gapClass+'">'+gapText+'</span></div>'+
+      '</div>';
+    }).join('');
+    document.getElementById('goalList').innerHTML = html;
+  }
+
+  // ---------- events ----------
+  document.addEventListener('toggle', function(e){
+    var d = e.target;
+    if(!(d.tagName==='DETAILS' && d.classList.contains('rule'))) return;
+    if(d.open){ state.openCards.add(d.dataset.uni); } else { state.openCards.delete(d.dataset.uni); }
+  }, true);
+
+  document.getElementById('navTabs').addEventListener('click', function(e){
+    var btn = e.target.closest('button[data-jump]');
+    if(!btn) return;
+    var el = document.getElementById(btn.dataset.jump);
+    if(el) el.scrollIntoView({behavior:'smooth', block:'start'});
+  });
+
+  document.getElementById('modeToggle').addEventListener('click', function(e){
+    var btn = e.target.closest('button[data-mode]');
+    if(!btn) return;
+    state.mode = btn.dataset.mode;
+    this.querySelectorAll('button').forEach(function(b){ b.classList.toggle('active', b===btn); });
+    renderSubjChart();
+  });
+
+  document.getElementById('subjectLegend').addEventListener('click', function(e){
+    var chip = e.target.closest('.legend-chip');
+    if(!chip) return;
+    var id = chip.dataset.subj;
+    var onCount = Object.keys(state.visible).filter(function(k){return state.visible[k];}).length;
+    if(state.visible[id] && onCount<=1) return;
+    state.visible[id] = !state.visible[id];
+    renderSubjectLegend();
+    renderSubjChart();
+  });
+
+  document.getElementById('clearExampleBtn').addEventListener('click', function(){
+    ROUNDS.forEach(function(r){
+      var subjects = {};
+      SUBJ_BASE.forEach(function(s){ subjects[s.id] = {score:'', grade:''}; });
+      state.exams[r.id] = Object.assign({}, state.exams[r.id], {subjects:subjects});
+      writeDoc('exams/'+r.id, {subjects:subjects});
+    });
+    state.settings.isExample = false;
+    writeDoc('settings/main', {isExample:false});
+    renderAll();
+  });
+
+  document.body.addEventListener('change', function(e){
+    var t = e.target;
+    var bind = t.dataset.bind;
+    if(!bind) return;
+
+    if(bind==='card'){
+      var uni=t.dataset.uni, field=t.dataset.field, val=t.value;
+      state.cards[uni] = Object.assign({}, cardOf(uni));
+      state.cards[uni][field] = val;
+      writeDoc('cards/'+uni, mkFieldObj(field, val));
+      if(field==='manualStatus'){ renderCards(); renderSummary(); }
+    }
+    else if(bind==='cardrule'){
+      var uni2=t.dataset.uni, field2=t.dataset.field;
+      var c = cardOf(uni2);
+      state.cards[uni2] = c;
+      var r = Object.assign({}, c.rule);
+      if(field2==='enabled'){ r.enabled = t.checked; }
+      else if(field2==='engModeCheck'){ r.engMode = t.checked ? 'separate':'include'; if(t.checked){ r.subjects = r.subjects.filter(function(s){return s!=='eng';}); } }
+      else if(field2==='histEnabled'){ r.histEnabled = t.checked; }
+      else if(field2==='count' || field2==='maxSum' || field2==='engMax' || field2==='histMax'){ r[field2] = Number(t.value)||0; }
+      state.cards[uni2].rule = r;
+      writeDoc('cards/'+uni2, {rule:r});
+      renderCards(); renderSummary();
+    }
+    else if(bind==='cardrulesubj'){
+      var uni3=t.dataset.uni, subj=t.dataset.subj;
+      var c3 = cardOf(uni3);
+      var r3 = Object.assign({}, c3.rule);
+      var set = r3.subjects.slice();
+      if(t.checked){ if(set.indexOf(subj)<0) set.push(subj); } else { set = set.filter(function(s){return s!==subj;}); }
+      r3.subjects = set;
+      state.cards[uni3] = c3; state.cards[uni3].rule = r3;
+      writeDoc('cards/'+uni3, {rule:r3});
+      renderCards(); renderSummary();
+    }
+    else if(bind==='exam'){
+      var round=t.dataset.round, subj2=t.dataset.subj, field3=t.dataset.field;
+      var ex = state.exams[round] = state.exams[round] || {subjects:{}};
+      ex.subjects = ex.subjects || {};
+      ex.subjects[subj2] = Object.assign({score:null,grade:null}, ex.subjects[subj2]);
+      var raw = t.value.trim();
+      if(field3==='grade' && raw!==''){
+        var gnum = Number(raw);
+        if(isNaN(gnum) || gnum<1 || gnum>9){ t.value = ex.subjects[subj2].grade==null?'':ex.subjects[subj2].grade; return; }
+      }
+      ex.subjects[subj2][field3] = raw;
+      writeDoc('exams/'+round, {subjects: mkNested(subj2, field3, raw)});
+      renderSummary(); renderAvgChart(); renderSubjChart(); renderGoals(); renderCards();
+    }
+    else if(bind==='subjname'){
+      var subj3=t.dataset.subj, val3=t.value || (subj3==='tam1'?'탐구1':'탐구2');
+      state.settings[subj3+'Name'] = val3;
+      var obj={}; obj[subj3+'Name']=val3;
+      writeDoc('settings/main', obj);
+      renderAll();
+    }
+    else if(bind==='goal'){
+      var subj4=t.dataset.subj, gval=Math.max(1,Math.min(9,Number(t.value)||2));
+      t.value=gval;
+      state.goals[subj4]=gval;
+      var obj2={}; obj2[subj4]=gval;
+      writeDoc('goals/targets', obj2);
+      renderSummary(); renderAvgChart(); renderGoals();
+    }
+    else if(bind==='avgset'){
+      var subj5=t.dataset.subj;
+      var goals2 = goalsState();
+      var set2 = goals2.avgSubjects.slice();
+      if(t.checked){ if(set2.indexOf(subj5)<0) set2.push(subj5); } else { set2=set2.filter(function(s){return s!==subj5;}); if(!set2.length) set2=[subj5]; }
+      state.goals.avgSubjects = set2;
+      writeDoc('goals/targets', {avgSubjects:set2});
+      renderSummary(); renderAvgChart(); renderAvgSubjectPicker();
+    }
+  });
+
+  function focusInside(containerId){
+    var el = document.getElementById(containerId);
+    return !!(el && document.activeElement && el.contains(document.activeElement));
+  }
+
+  function mkFieldObj(field, val){ var o={}; o[field]=val; return o; }
+  function mkNested(subj, field, val){ var o={}; o[subj]={}; o[subj][field]=val; return o; }
+
+  // ---------- boot ----------
+  function subscribeAll(){
+    db.collection('cards').onSnapshot(function(snap){
+      var next = {};
+      snap.docs.forEach(function(d){ next[d.id] = d.data(); });
+      state.cards = next;
+      if(!focusInside('cardGrid')) renderCards();
+      renderSummary();
+    }, function(err){ console.warn('cards sub error', err); });
+
+    db.collection('exams').onSnapshot(function(snap){
+      var next = {};
+      snap.docs.forEach(function(d){ next[d.id] = d.data(); });
+      state.exams = next;
+      renderSummary(); renderAvgChart(); renderSubjChart(); renderGoals();
+      if(!focusInside('entryTable')) renderEntryTable();
+      if(!focusInside('cardGrid')) renderCards();
+    }, function(err){ console.warn('exams sub error', err); });
+
+    db.doc('settings/main').onSnapshot(function(snap){
+      state.settings = snap.exists ? snap.data() : {};
+      renderBanner();
+      renderSummary();
+      renderAvgSubjectPicker();
+      renderAvgChart();
+      renderSubjectLegend();
+      renderSubjChart();
+      renderGoals();
+      if(!focusInside('cardGrid')) renderCards();
+      if(!focusInside('entryTable')) renderEntryTable();
+    }, function(err){ console.warn('settings sub error', err); });
+
+    db.doc('goals/targets').onSnapshot(function(snap){
+      state.goals = snap.exists ? snap.data() : {};
+      renderSummary(); renderAvgChart(); renderAvgSubjectPicker(); renderGoals();
+    }, function(err){ console.warn('goals sub error', err); });
+  }
+
+  function boot(){
+    renderAll(); // render fixed structure immediately (cards/table skeleton with empty data)
+    claude.use('db').then(function(ns){
+      if(!ns){
+        document.getElementById('statGrid').innerHTML = '<div class="empty-note" style="grid-column:1/-1">저장 기능을 사용할 수 없는 보기입니다. 편집 내용이 저장되지 않을 수 있어요.</div>';
+        return;
+      }
+      db = ns;
+      subscribeAll();
+    }).catch(function(e){ console.warn('db unavailable', e); });
+  }
+
+  if(document.readyState==='loading'){ document.addEventListener('DOMContentLoaded', boot); } else { boot(); }
+})();
+</script>
