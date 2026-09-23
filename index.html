@@ -103,6 +103,9 @@
   .section-head{display:flex; align-items:baseline; justify-content:space-between; gap:10px; margin-block-end:12px}
   .section-head h2{font-size:19px}
   .section-head .hint{font-size:12px; color:var(--ink-3)}
+  .ref-round{display:flex; align-items:center; gap:7px}
+  .ref-round label{font-size:11.5px; font-weight:700; color:var(--ink-3); white-space:nowrap}
+  .ref-round select{border:1px solid var(--line); background:var(--card); color:var(--ink); border-radius:8px; padding:6px 8px; font:inherit; font-size:12.5px; font-weight:600}
   .eyebrow{font-size:11px; font-weight:700; letter-spacing:.06em; color:var(--accent-ink); text-transform:uppercase}
 
   /* banner */
@@ -300,7 +303,10 @@
   <section id="summary">
     <div class="section-head">
       <h2>요약</h2>
-      <span class="hint">최신 응시 성적 기준</span>
+      <div class="ref-round">
+        <label for="refRoundSelect">기준 시험</label>
+        <select id="refRoundSelect" data-bind="refround"></select>
+      </div>
     </div>
     <div class="stat-grid" id="statGrid"></div>
     <div class="status-groups" id="statusGroups"></div>
@@ -403,7 +409,8 @@
     mode:'grade',
     visible:{kor:true,math:true,eng:true,tam1:true,tam2:true,hist:true},
     pinnedRound:null,
-    openCards:new Set()
+    openCards:new Set(),
+    refRound:null // null = "latest entered", otherwise a round id like 'r4'
   };
 
   function subjColor(id){ return getComputedStyle(document.documentElement).getPropertyValue('--s-'+id).trim(); }
@@ -448,8 +455,17 @@
     var s = ex.subjects[subjId];
     return {score: num(s.score), grade: num(s.grade)};
   }
+  // The round used as "current" everywhere status is computed — either the
+  // user-picked reference round, or (when unset) the last round of all 6.
+  function refRoundIndex(){
+    if(!state.refRound) return ROUNDS.length-1;
+    var idx = ROUNDS.findIndex(function(r){ return r.id===state.refRound; });
+    return idx>=0 ? idx : ROUNDS.length-1;
+  }
+  // Most recent non-empty grade at or before the reference round (scans
+  // backward past gaps, e.g. a 탐구2 only tested in some rounds).
   function latestGrade(subjId){
-    for(var i=ROUNDS.length-1;i>=0;i--){
+    for(var i=refRoundIndex();i>=0;i--){
       var v = examSubj(ROUNDS[i].id, subjId).grade;
       if(v!=null) return v;
     }
@@ -599,6 +615,7 @@
   // ---------- rendering ----------
   function renderAll(){
     renderBanner();
+    renderRefRoundSelect();
     renderSummary();
     renderCards();
     renderEntryTable();
@@ -614,11 +631,20 @@
     b.hidden = state.settings.isExample === false;
   }
 
+  function renderRefRoundSelect(){
+    var sel = document.getElementById('refRoundSelect');
+    var html = '<option value="">최신 입력 기준</option>' + ROUNDS.map(function(r){
+      return '<option value="'+r.id+'" '+(state.refRound===r.id?'selected':'')+'>'+esc(r.label)+' 기준</option>';
+    }).join('');
+    sel.innerHTML = html;
+    sel.value = state.refRound || '';
+  }
+
   function renderSummary(){
     var goals = goalsState();
     var avgIds = goals.avgSubjects && goals.avgSubjects.length ? goals.avgSubjects : ['kor','math','eng','tam1','tam2'];
     var lastRoundWithData = null;
-    for(var i=ROUNDS.length-1;i>=0;i--){
+    for(var i=refRoundIndex();i>=0;i--){
       if(roundAverage(ROUNDS[i].id, avgIds)!=null){ lastRoundWithData = ROUNDS[i].id; break; }
     }
     var curAvg = lastRoundWithData ? roundAverage(lastRoundWithData, avgIds) : null;
@@ -1208,6 +1234,10 @@
       state.goals.avgSubjects = set2;
       saveToStorage();
       renderSummary(); renderAvgChart(); renderAvgSubjectPicker();
+    }
+    else if(bind==='refround'){
+      state.refRound = t.value || null;
+      renderSummary(); renderCards(); renderGoals();
     }
   });
 
