@@ -403,11 +403,8 @@
     mode:'grade',
     visible:{kor:true,math:true,eng:true,tam1:true,tam2:true,hist:true},
     pinnedRound:null,
-    openCards:new Set(),
-    userEditedExams:false
+    openCards:new Set()
   };
-
-  var db = null;
 
   function subjColor(id){ return getComputedStyle(document.documentElement).getPropertyValue('--s-'+id).trim(); }
   function subjName(id){
@@ -566,35 +563,37 @@
 
   var STATUS_LABEL = {met:'충족', unmet:'미충족', unknown:'미정'};
 
-  // ---------- write helpers ----------
-  var writeChain = {};
-  // Always resolves (never rejects, so chained writes to the same doc never stall):
-  // {ok:true} on success, {ok:false, error} on failure — callers that need to
-  // know whether a save actually landed should inspect the resolved value.
-  function writeDoc(path, data){
-    var prev = writeChain[path] || Promise.resolve();
-    var next = prev.then(function(){ return updateSafe(path, data); })
-      .then(function(){ return {ok:true}; })
-      .catch(function(e){ console.warn('write failed', path, e); return {ok:false, error:e}; });
-    writeChain[path] = next;
-    return next;
+  // ---------- persistence (browser localStorage — this runs as a plain static page) ----------
+  var STORAGE_KEY = 'susiRoadmapV1';
+  function loadFromStorage(){
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch(e){ return null; }
   }
-  function updateSafe(path, data){
-    if(!db) return Promise.reject(new Error('db capability not available'));
-    return db.doc(path).get().then(function(snap){
-      if(snap.exists){ return db.doc(path).update(data); }
-      return db.doc(path).set(data);
-    });
+  function saveToStorage(){
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        cards: state.cards, exams: state.exams, goals: state.goals, settings: state.settings
+      }));
+    } catch(e){ console.warn('저장 실패 (localStorage를 쓸 수 없어요)', e); }
   }
-  // Writes several docs one at a time (not concurrently) and resolves with
-  // each writeDoc() result in order, once every write has settled.
-  function writeDocsSequential(entries){
-    var results = [];
-    var p = Promise.resolve();
-    entries.forEach(function(e){
-      p = p.then(function(){ return writeDoc(e[0], e[1]); }).then(function(r){ results.push(r); });
+  function seedExampleData(){
+    var examples = {
+      r1:{kor:['82','3'],math:['78','3'],eng:['85','2'],tam1:['75','4'],tam2:['80','3'],hist:['90','2']},
+      r2:{kor:['85','2'],math:['80','3'],eng:['88','2'],tam1:['78','3'],tam2:['82','3'],hist:['92','2']},
+      r3:{kor:['88','2'],math:['84','2'],eng:['90','1'],tam1:['82','3'],tam2:['85','2'],hist:['92','2']},
+      r4:{kor:['84','2'],math:['82','2'],eng:['87','2'],tam1:['80','3'],tam2:['83','2'],hist:['90','2']}
+    };
+    var exams = {};
+    Object.keys(examples).forEach(function(r){
+      var subjects = {};
+      Object.keys(examples[r]).forEach(function(s){ subjects[s] = {score:examples[r][s][0], grade:examples[r][s][1]}; });
+      exams[r] = {subjects:subjects};
     });
-    return p.then(function(){ return results; });
+    state.exams = exams;
+    state.settings = {isExample:true, tam1Name:'생명1', tam2Name:'지구1'};
+    saveToStorage();
   }
 
   // ---------- rendering ----------
@@ -610,20 +609,9 @@
     renderGoals();
   }
 
-  var DEFAULT_BANNER_HTML = '<strong>예시 데이터</strong>가 표시되어 있어요. 실제 성적을 입력하려면 먼저 초기화하세요.';
   function renderBanner(){
     var b = document.getElementById('exampleBanner');
-    var span = b.querySelector('span');
-    if(span.dataset.alert !== '1'){ span.innerHTML = DEFAULT_BANNER_HTML; }
     b.hidden = state.settings.isExample === false;
-  }
-  function alertBanner(msg){
-    var b = document.getElementById('exampleBanner');
-    var span = b.querySelector('span');
-    span.textContent = msg;
-    span.dataset.alert = '1';
-    b.hidden = false;
-    setTimeout(function(){ span.dataset.alert = '0'; renderBanner(); }, 5000);
   }
 
   function renderSummary(){
@@ -1073,48 +1061,20 @@
   });
 
   document.getElementById('clearExampleBtn').addEventListener('click', function(){
-    var btn = this;
-    if(btn.disabled) return;
-    state.userEditedExams = true;
-    var entries = [];
     ROUNDS.forEach(function(r){
       var subjects = {};
       SUBJ_BASE.forEach(function(s){ subjects[s.id] = {score:'', grade:''}; });
-      state.exams[r.id] = Object.assign({}, state.exams[r.id], {subjects:subjects});
-      entries.push(['exams/'+r.id, {subjects:subjects}]);
+      state.exams[r.id] = {subjects:subjects};
     });
-    entries.push(['settings/main', {isExample:false}]);
     state.settings.isExample = false;
+    saveToStorage();
     renderAll();
-    if(!db){
-      alertBanner('저장 기능을 쓸 수 없는 보기예요. 화면은 비워졌지만 저장되지 않았어요.');
-      return;
-    }
-    btn.disabled = true;
-    var origLabel = btn.textContent;
-    btn.textContent = '초기화 중…';
-    writeDocsSequential(entries).then(function(results){
-      btn.disabled = false;
-      var failed = results.filter(function(r){ return !r.ok; }).length;
-      if(failed>0){
-        btn.textContent = origLabel;
-        state.settings.isExample = true; // write didn't fully land — keep the banner honest
-        renderBanner();
-        alertBanner('초기화 저장에 실패했어요('+failed+'/'+results.length+'). 인터넷 연결을 확인하고 다시 눌러주세요.');
-      } else {
-        btn.textContent = origLabel;
-        state.settings.isExample = false;
-        renderBanner();
-      }
-    });
   });
 
   document.getElementById('applyEntryBtn').addEventListener('click', function(){
-    state.userEditedExams = true;
     if(document.activeElement && document.activeElement.blur) document.activeElement.blur();
     var flash = document.getElementById('applyEntryFlash');
     var inputs = document.querySelectorAll('#entryTable input[data-bind="exam"]');
-    var byRound = {};
     var filledCount = 0;
     inputs.forEach(function(inp){
       var round = inp.dataset.round, subj = inp.dataset.subj, field = inp.dataset.field;
@@ -1129,42 +1089,19 @@
       ex.subjects = ex.subjects || {};
       ex.subjects[subj] = Object.assign({score:null,grade:null}, ex.subjects[subj]);
       ex.subjects[subj][field] = raw;
-      byRound[round] = byRound[round] || {};
-      byRound[round][subj] = Object.assign({}, byRound[round][subj], ex.subjects[subj]);
     });
-    // Re-render immediately from the values just read off the DOM, so the
-    // trend shows up right away without waiting on the network round trip.
+    saveToStorage();
     renderSummary(); renderAvgChart(); renderSubjChart(); renderGoals(); renderCards();
 
     if(filledCount===0){
       flash.textContent = '⚠ 입력된 값이 없어요. 표에 점수나 등급을 먼저 입력하세요.';
       flash.style.color = 'var(--critical)';
-      flash.style.opacity = '1';
-      return;
+    } else {
+      flash.textContent = '✓ 저장 완료 · 추이에 반영했어요 ('+filledCount+'개 값)';
+      flash.style.color = 'var(--good)';
+      setTimeout(function(){ flash.style.opacity = '0'; }, 2200);
     }
-    if(!db){
-      flash.textContent = '⚠ 저장 기능을 쓸 수 없는 보기예요. 화면에는 보이지만 저장되지 않을 수 있어요.';
-      flash.style.color = 'var(--critical)';
-      flash.style.opacity = '1';
-      return;
-    }
-    var entries = Object.keys(byRound).map(function(round){
-      return ['exams/'+round, {subjects: byRound[round]}];
-    });
-    flash.textContent = '저장 중…';
-    flash.style.color = 'var(--ink-3)';
     flash.style.opacity = '1';
-    writeDocsSequential(entries).then(function(results){
-      var failed = results.filter(function(r){ return !r.ok; }).length;
-      if(failed>0){
-        flash.textContent = '⚠ 일부 저장에 실패했어요('+failed+'/'+results.length+'). 다시 눌러주세요.';
-        flash.style.color = 'var(--critical)';
-      } else {
-        flash.textContent = '✓ 저장 완료 · 추이에 반영했어요 ('+filledCount+'개 값)';
-        flash.style.color = 'var(--good)';
-        setTimeout(function(){ flash.style.opacity = '0'; }, 2200);
-      }
-    });
   });
 
   document.body.addEventListener('change', function(e){
@@ -1176,7 +1113,7 @@
       var uni=t.dataset.uni, field=t.dataset.field, val=t.value;
       state.cards[uni] = Object.assign({}, cardOf(uni));
       state.cards[uni][field] = val;
-      writeDoc('cards/'+uni, mkFieldObj(field, val));
+      saveToStorage();
       if(field==='manualStatus'){ renderCards(); renderSummary(); }
     }
     else if(bind==='cardrule'){
@@ -1208,7 +1145,7 @@
         r.tamMode = t.value;
       }
       state.cards[uni2].rule = r;
-      writeDoc('cards/'+uni2, {rule:r});
+      saveToStorage();
       renderCards(); renderSummary();
     }
     else if(bind==='cardrulesubj'){
@@ -1220,7 +1157,7 @@
       r3.subjects = set;
       if(!t.checked){ r3.requiredSubjects = (r3.requiredSubjects||[]).filter(function(s){return s!==subj;}); }
       state.cards[uni3] = c3; state.cards[uni3].rule = r3;
-      writeDoc('cards/'+uni3, {rule:r3});
+      saveToStorage();
       renderCards(); renderSummary();
     }
     else if(bind==='cardrulereq'){
@@ -1231,11 +1168,10 @@
       if(t.checked){ if(reqSet.indexOf(subj4r)<0) reqSet.push(subj4r); } else { reqSet = reqSet.filter(function(s){return s!==subj4r;}); }
       r4.requiredSubjects = reqSet;
       state.cards[uni4] = c4; state.cards[uni4].rule = r4;
-      writeDoc('cards/'+uni4, {rule:r4});
+      saveToStorage();
       renderCards(); renderSummary();
     }
     else if(bind==='exam'){
-      state.userEditedExams = true;
       var round=t.dataset.round, subj2=t.dataset.subj, field3=t.dataset.field;
       var ex = state.exams[round] = state.exams[round] || {subjects:{}};
       ex.subjects = ex.subjects || {};
@@ -1248,22 +1184,20 @@
         t.value = raw;
       }
       ex.subjects[subj2][field3] = raw;
-      writeDoc('exams/'+round, {subjects: mkNested(subj2, field3, raw)});
+      saveToStorage();
       renderSummary(); renderAvgChart(); renderSubjChart(); renderGoals(); renderCards();
     }
     else if(bind==='subjname'){
       var subj3=t.dataset.subj, val3=t.value || (subj3==='tam1'?'탐구1':'탐구2');
       state.settings[subj3+'Name'] = val3;
-      var obj={}; obj[subj3+'Name']=val3;
-      writeDoc('settings/main', obj);
+      saveToStorage();
       renderAll();
     }
     else if(bind==='goal'){
       var subj4=t.dataset.subj, gval=Math.max(1,Math.min(9,Number(t.value)||2));
       t.value=gval;
       state.goals[subj4]=gval;
-      var obj2={}; obj2[subj4]=gval;
-      writeDoc('goals/targets', obj2);
+      saveToStorage();
       renderSummary(); renderAvgChart(); renderGoals();
     }
     else if(bind==='avgset'){
@@ -1272,67 +1206,23 @@
       var set2 = goals2.avgSubjects.slice();
       if(t.checked){ if(set2.indexOf(subj5)<0) set2.push(subj5); } else { set2=set2.filter(function(s){return s!==subj5;}); if(!set2.length) set2=[subj5]; }
       state.goals.avgSubjects = set2;
-      writeDoc('goals/targets', {avgSubjects:set2});
+      saveToStorage();
       renderSummary(); renderAvgChart(); renderAvgSubjectPicker();
     }
   });
 
-  function focusInside(containerId){
-    var el = document.getElementById(containerId);
-    return !!(el && document.activeElement && el.contains(document.activeElement));
-  }
-
-  function mkFieldObj(field, val){ var o={}; o[field]=val; return o; }
-  function mkNested(subj, field, val){ var o={}; o[subj]={}; o[subj][field]=val; return o; }
-
   // ---------- boot ----------
-  function subscribeAll(){
-    db.collection('cards').onSnapshot(function(snap){
-      var next = {};
-      snap.docs.forEach(function(d){ next[d.id] = d.data(); });
-      state.cards = next;
-      if(!focusInside('cardGrid')) renderCards();
-      renderSummary();
-    }, function(err){ console.warn('cards sub error', err); });
-
-    db.collection('exams').onSnapshot(function(snap){
-      var next = {};
-      snap.docs.forEach(function(d){ next[d.id] = d.data(); });
-      state.exams = next;
-      renderSummary(); renderAvgChart(); renderSubjChart(); renderGoals();
-      if(!state.userEditedExams && !focusInside('entryTable')) renderEntryTable();
-      if(!focusInside('cardGrid')) renderCards();
-    }, function(err){ console.warn('exams sub error', err); });
-
-    db.doc('settings/main').onSnapshot(function(snap){
-      state.settings = snap.exists ? snap.data() : {};
-      renderBanner();
-      renderSummary();
-      renderAvgSubjectPicker();
-      renderAvgChart();
-      renderSubjectLegend();
-      renderSubjChart();
-      renderGoals();
-      if(!focusInside('cardGrid')) renderCards();
-      if(!state.userEditedExams && !focusInside('entryTable')) renderEntryTable();
-    }, function(err){ console.warn('settings sub error', err); });
-
-    db.doc('goals/targets').onSnapshot(function(snap){
-      state.goals = snap.exists ? snap.data() : {};
-      renderSummary(); renderAvgChart(); renderAvgSubjectPicker(); renderGoals();
-    }, function(err){ console.warn('goals sub error', err); });
-  }
-
   function boot(){
-    renderAll(); // render fixed structure immediately (cards/table skeleton with empty data)
-    claude.use('db').then(function(ns){
-      if(!ns){
-        document.getElementById('statGrid').innerHTML = '<div class="empty-note" style="grid-column:1/-1">저장 기능을 사용할 수 없는 보기입니다. 편집 내용이 저장되지 않을 수 있어요.</div>';
-        return;
-      }
-      db = ns;
-      subscribeAll();
-    }).catch(function(e){ console.warn('db unavailable', e); });
+    var saved = loadFromStorage();
+    if(saved){
+      state.cards = saved.cards || {};
+      state.exams = saved.exams || {};
+      state.goals = saved.goals || {};
+      state.settings = saved.settings || {};
+    } else {
+      seedExampleData();
+    }
+    renderAll();
   }
 
   if(document.readyState==='loading'){ document.addEventListener('DOMContentLoaded', boot); } else { boot(); }
