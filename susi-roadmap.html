@@ -147,7 +147,7 @@
   .uni-card h3{font-size:17px}
   .uni-card .track{font-size:11.5px; color:var(--ink-2)}
   .field label{display:block; font-size:10.5px; color:var(--ink-3); font-weight:700; letter-spacing:.02em; margin-block-end:3px}
-  .field input[type=text], .field textarea{
+  .field input[type=text], .field textarea, .field select{
     width:100%; border:1px solid var(--line); background:var(--card-2); color:var(--ink); border-radius:8px;
     padding:7px 8px; font:inherit; font-size:12.5px; resize:vertical;
   }
@@ -393,6 +393,7 @@
   function subjName(id){
     if(id==='tam1') return (state.settings.tam1Name || '탐구1');
     if(id==='tam2') return (state.settings.tam2Name || '탐구2');
+    if(id==='tam') return '탐구';
     var b = SUBJ_BASE.filter(function(s){return s.id===id})[0];
     return b ? b.name : id;
   }
@@ -406,6 +407,9 @@
     if(v===undefined || v===null || v==='') return null;
     var n = Number(v);
     return isNaN(n) ? null : n;
+  }
+  function fmtNum(n){
+    return (Math.round(n*100)/100).toString();
   }
 
   // ---------- data access helpers ----------
@@ -436,7 +440,30 @@
   function defaultCard(){
     return {track:'', minReqText:'', manualStatus:'unknown',
       rule:{enabled:false, subjects:['kor','math','eng','tam1','tam2'], count:2, maxSum:6,
-            engMode:'include', engMax:2, histEnabled:false, histMax:4}};
+            engMode:'include', engMax:2, histEnabled:false, histMax:4, tamMode:'separate'}};
+  }
+  var TAM_MODE_LABEL = {
+    separate:'탐구1·탐구2 각각 반영',
+    best1:'탐구 중 더 좋은 1과목만 반영',
+    avg_floor:'탐구 2과목 평균 반영 (소수점 버림)',
+    avg_round:'탐구 2과목 평균 반영 (반올림)',
+    avg_exact:'탐구 2과목 평균 반영 (소수점 유지)'
+  };
+  function tamCombinedGrade(mode){
+    var g1 = latestGrade('tam1'), g2 = latestGrade('tam2');
+    if(mode==='best1'){
+      if(g1==null && g2==null) return null;
+      if(g1==null) return g2;
+      if(g2==null) return g1;
+      return Math.min(g1,g2);
+    }
+    if(g1==null && g2==null) return null;
+    if(g1==null) return g2;
+    if(g2==null) return g1;
+    var avg = (g1+g2)/2;
+    if(mode==='avg_floor') return Math.floor(avg);
+    if(mode==='avg_round') return Math.round(avg);
+    return avg;
   }
   function cardOf(id){
     var c = state.cards[id] || {};
@@ -454,14 +481,17 @@
     var r = card.rule;
     var reasonParts = [];
     var poolIds = (r.subjects||[]).filter(function(s){ return !(s==='eng' && r.engMode==='separate'); });
-    var poolVals = poolIds.map(function(s){ return {id:s, g:latestGrade(s)}; }).filter(function(x){return x.g!=null;});
+    var poolVals = poolIds.map(function(s){
+      var g = s==='tam' ? tamCombinedGrade(r.tamMode||'separate') : latestGrade(s);
+      return {id:s, g:g};
+    }).filter(function(x){return x.g!=null;});
     var poolStatus = 'unknown', poolSum = null;
     if(poolVals.length >= r.count && r.count>0){
       poolVals.sort(function(a,b){return a.g-b.g;});
       var chosen = poolVals.slice(0, r.count);
       poolSum = chosen.reduce(function(a,b){return a+b.g;},0);
       poolStatus = poolSum <= r.maxSum ? 'met' : 'unmet';
-      reasonParts.push(chosen.map(function(c){return subjName(c.id)+' '+c.g;}).join('+')+'='+poolSum+' (기준 '+r.maxSum+' 이내)');
+      reasonParts.push(chosen.map(function(c){return subjName(c.id)+' '+fmtNum(c.g);}).join('+')+'='+fmtNum(poolSum)+' (기준 '+r.maxSum+' 이내)');
     } else if(r.count>0){
       reasonParts.push('반영 과목 성적 부족');
     }
@@ -581,8 +611,15 @@
           ['unknown','met','unmet'].map(function(v){return '<option value="'+v+'" '+(card.manualStatus===v?'selected':'')+'>'+STATUS_LABEL[v]+'</option>';}).join('')+
           '</select></div>';
       } else {
+        html += '    <div class="field"><label>탐구 반영 방식</label><select data-bind="cardrule" data-uni="'+u.id+'" data-field="tamMode">'+
+          ['separate','best1','avg_floor','avg_round','avg_exact'].map(function(m){
+            return '<option value="'+m+'" '+((r.tamMode||'separate')===m?'selected':'')+'>'+TAM_MODE_LABEL[m]+'</option>';
+          }).join('')+
+          '</select></div>';
         html += '    <div><label style="display:block;font-size:10.5px;color:var(--ink-3);font-weight:700;margin-block-end:4px">합산 반영 과목</label><div class="chip-row">';
-        ['kor','math','eng','tam1','tam2'].forEach(function(sid){
+        var tamMode = r.tamMode||'separate';
+        var subjChoices = tamMode==='separate' ? ['kor','math','eng','tam1','tam2'] : ['kor','math','eng','tam'];
+        subjChoices.forEach(function(sid){
           if(sid==='eng' && r.engMode!=='include') return;
           var checked = r.subjects.indexOf(sid)>=0;
           html += '<label class="chip"><input type="checkbox" data-bind="cardrulesubj" data-uni="'+u.id+'" data-subj="'+sid+'" '+(checked?'checked':'')+'>'+subjName(sid)+'</label>';
@@ -965,6 +1002,14 @@
       else if(field2==='engModeCheck'){ r.engMode = t.checked ? 'separate':'include'; if(t.checked){ r.subjects = r.subjects.filter(function(s){return s!=='eng';}); } }
       else if(field2==='histEnabled'){ r.histEnabled = t.checked; }
       else if(field2==='count' || field2==='maxSum' || field2==='engMax' || field2==='histMax'){ r[field2] = Number(t.value)||0; }
+      else if(field2==='tamMode'){
+        var hadTam = r.subjects.indexOf('tam1')>=0 || r.subjects.indexOf('tam2')>=0 || r.subjects.indexOf('tam')>=0;
+        var subj = r.subjects.filter(function(s){return s!=='tam1' && s!=='tam2' && s!=='tam';});
+        if(t.value==='separate'){ if(hadTam){ subj.push('tam1'); subj.push('tam2'); } }
+        else { if(hadTam){ subj.push('tam'); } }
+        r.subjects = subj;
+        r.tamMode = t.value;
+      }
       state.cards[uni2].rule = r;
       writeDoc('cards/'+uni2, {rule:r});
       renderCards(); renderSummary();
