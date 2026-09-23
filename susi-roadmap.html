@@ -440,7 +440,7 @@
   function defaultCard(){
     return {track:'', minReqText:'', manualStatus:'unknown',
       rule:{enabled:false, subjects:['kor','math','eng','tam1','tam2'], count:2, maxSum:6,
-            engMode:'include', engMax:2, histEnabled:false, histMax:4, tamMode:'separate'}};
+            engMode:'include', engMax:2, histEnabled:false, histMax:4, tamMode:'separate', mathRequired:false}};
   }
   var TAM_MODE_LABEL = {
     separate:'탐구1·탐구2 각각 반영',
@@ -486,7 +486,24 @@
       return {id:s, g:g};
     }).filter(function(x){return x.g!=null;});
     var poolStatus = 'unknown', poolSum = null;
-    if(poolVals.length >= r.count && r.count>0){
+    if(r.mathRequired){
+      var mg = latestGrade('math');
+      if(mg==null){
+        reasonParts.push('수학 성적 미입력 (필수 반영)');
+      } else {
+        var restVals = poolVals.filter(function(x){return x.id!=='math';});
+        var needRest = Math.max(0, r.count-1);
+        if(restVals.length < needRest){
+          reasonParts.push('반영 과목 성적 부족');
+        } else {
+          restVals.sort(function(a,b){return a.g-b.g;});
+          var chosenM = [{id:'math', g:mg}].concat(restVals.slice(0, needRest));
+          poolSum = chosenM.reduce(function(a,b){return a+b.g;},0);
+          poolStatus = poolSum <= r.maxSum ? 'met' : 'unmet';
+          reasonParts.push(chosenM.map(function(c){return subjName(c.id)+' '+fmtNum(c.g);}).join('+')+'='+fmtNum(poolSum)+' (기준 '+r.maxSum+' 이내, 수학 필수)');
+        }
+      }
+    } else if(poolVals.length >= r.count && r.count>0){
       poolVals.sort(function(a,b){return a.g-b.g;});
       var chosen = poolVals.slice(0, r.count);
       poolSum = chosen.reduce(function(a,b){return a+b.g;},0);
@@ -621,10 +638,12 @@
         var subjChoices = tamMode==='separate' ? ['kor','math','eng','tam1','tam2'] : ['kor','math','eng','tam'];
         subjChoices.forEach(function(sid){
           if(sid==='eng' && r.engMode!=='include') return;
-          var checked = r.subjects.indexOf(sid)>=0;
-          html += '<label class="chip"><input type="checkbox" data-bind="cardrulesubj" data-uni="'+u.id+'" data-subj="'+sid+'" '+(checked?'checked':'')+'>'+subjName(sid)+'</label>';
+          var forced = r.mathRequired && sid==='math';
+          var checked = forced || r.subjects.indexOf(sid)>=0;
+          html += '<label class="chip"><input type="checkbox" data-bind="cardrulesubj" data-uni="'+u.id+'" data-subj="'+sid+'" '+(checked?'checked':'')+' '+(forced?'disabled':'')+'>'+subjName(sid)+(forced?' (필수)':'')+'</label>';
         });
         html += '    </div></div>';
+        html += '    <label class="toggle-line"><input type="checkbox" data-bind="cardrule" data-uni="'+u.id+'" data-field="mathRequired" '+(r.mathRequired?'checked':'')+'> 수학 필수 반영 (반영 과목과 무관하게 항상 합산에 포함)</label>';
         html += '    <div class="row2">'+
           '<div class="num-field">반영 개수<input type="number" min="1" max="5" data-bind="cardrule" data-uni="'+u.id+'" data-field="count" value="'+r.count+'"></div>'+
           '<div class="num-field">합 기준(이내)<input type="number" min="1" max="45" data-bind="cardrule" data-uni="'+u.id+'" data-field="maxSum" value="'+r.maxSum+'"></div>'+
@@ -1001,6 +1020,7 @@
       if(field2==='enabled'){ r.enabled = t.checked; }
       else if(field2==='engModeCheck'){ r.engMode = t.checked ? 'separate':'include'; if(t.checked){ r.subjects = r.subjects.filter(function(s){return s!=='eng';}); } }
       else if(field2==='histEnabled'){ r.histEnabled = t.checked; }
+      else if(field2==='mathRequired'){ r.mathRequired = t.checked; if(t.checked && r.subjects.indexOf('math')<0){ r.subjects = r.subjects.concat(['math']); } }
       else if(field2==='count' || field2==='maxSum' || field2==='engMax' || field2==='histMax'){ r[field2] = Number(t.value)||0; }
       else if(field2==='tamMode'){
         var hadTam = r.subjects.indexOf('tam1')>=0 || r.subjects.indexOf('tam2')>=0 || r.subjects.indexOf('tam')>=0;
