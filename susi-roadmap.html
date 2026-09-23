@@ -403,7 +403,8 @@
     mode:'grade',
     visible:{kor:true,math:true,eng:true,tam1:true,tam2:true,hist:true},
     pinnedRound:null,
-    openCards:new Set()
+    openCards:new Set(),
+    userEditedExams:false
   };
 
   var db = null;
@@ -429,6 +430,18 @@
   }
   function fmtNum(n){
     return (Math.round(n*100)/100).toString();
+  }
+  // Lenient grade parsing: accepts "3", "3등급", "3 등급", full-width digits, etc.
+  // Returns an integer 1-9, or null when no digit is found at all.
+  function parseGradeInput(raw){
+    var s = String(raw).trim();
+    if(s==='') return '';
+    var m = s.match(/\d+/);
+    if(!m) return null;
+    var n = Number(m[0]);
+    if(isNaN(n)) return null;
+    n = Math.max(1, Math.min(9, Math.round(n)));
+    return n;
   }
 
   // ---------- data access helpers ----------
@@ -555,14 +568,19 @@
 
   // ---------- write helpers ----------
   var writeChain = {};
+  // Always resolves (never rejects, so chained writes to the same doc never stall):
+  // {ok:true} on success, {ok:false, error} on failure — callers that need to
+  // know whether a save actually landed should inspect the resolved value.
   function writeDoc(path, data){
     var prev = writeChain[path] || Promise.resolve();
     var next = prev.then(function(){ return updateSafe(path, data); })
-      .catch(function(e){ console.warn('write failed', path, e); });
+      .then(function(){ return {ok:true}; })
+      .catch(function(e){ console.warn('write failed', path, e); return {ok:false, error:e}; });
     writeChain[path] = next;
     return next;
   }
   function updateSafe(path, data){
+    if(!db) return Promise.reject(new Error('db capability not available'));
     return db.doc(path).get().then(function(snap){
       if(snap.exists){ return db.doc(path).update(data); }
       return db.doc(path).set(data);
@@ -1034,6 +1052,7 @@
   });
 
   document.getElementById('clearExampleBtn').addEventListener('click', function(){
+    state.userEditedExams = true;
     ROUNDS.forEach(function(r){
       var subjects = {};
       SUBJ_BASE.forEach(function(s){ subjects[s.id] = {score:'', grade:''}; });
@@ -1046,16 +1065,21 @@
   });
 
   document.getElementById('applyEntryBtn').addEventListener('click', function(){
+    state.userEditedExams = true;
     if(document.activeElement && document.activeElement.blur) document.activeElement.blur();
+    var flash = document.getElementById('applyEntryFlash');
     var inputs = document.querySelectorAll('#entryTable input[data-bind="exam"]');
     var byRound = {};
+    var filledCount = 0;
     inputs.forEach(function(inp){
       var round = inp.dataset.round, subj = inp.dataset.subj, field = inp.dataset.field;
       var raw = inp.value.trim();
-      if(field==='grade' && raw!==''){
-        var gnum = Number(raw);
-        if(isNaN(gnum) || gnum<1 || gnum>9){ raw=''; inp.value=''; }
+      if(field==='grade'){
+        var parsed = parseGradeInput(raw);
+        raw = parsed===null ? '' : (parsed===''?'':String(parsed));
+        inp.value = raw;
       }
+      if(raw!=='') filledCount++;
       var ex = state.exams[round] = state.exams[round] || {subjects:{}};
       ex.subjects = ex.subjects || {};
       ex.subjects[subj] = Object.assign({score:null,grade:null}, ex.subjects[subj]);
@@ -1063,13 +1087,39 @@
       byRound[round] = byRound[round] || {};
       byRound[round][subj] = Object.assign({}, byRound[round][subj], ex.subjects[subj]);
     });
-    Object.keys(byRound).forEach(function(round){
-      writeDoc('exams/'+round, {subjects: byRound[round]});
-    });
+    // Re-render immediately from the values just read off the DOM, so the
+    // trend shows up right away without waiting on the network round trip.
     renderSummary(); renderAvgChart(); renderSubjChart(); renderGoals(); renderCards();
-    var flash = document.getElementById('applyEntryFlash');
+
+    if(filledCount===0){
+      flash.textContent = '⚠ 입력된 값이 없어요. 표에 점수나 등급을 먼저 입력하세요.';
+      flash.style.color = 'var(--critical)';
+      flash.style.opacity = '1';
+      return;
+    }
+    if(!db){
+      flash.textContent = '⚠ 저장 기능을 쓸 수 없는 보기예요. 화면에는 보이지만 저장되지 않을 수 있어요.';
+      flash.style.color = 'var(--critical)';
+      flash.style.opacity = '1';
+      return;
+    }
+    var writes = Object.keys(byRound).map(function(round){
+      return writeDoc('exams/'+round, {subjects: byRound[round]});
+    });
+    flash.textContent = '저장 중…';
+    flash.style.color = 'var(--ink-3)';
     flash.style.opacity = '1';
-    setTimeout(function(){ flash.style.opacity = '0'; }, 1600);
+    Promise.all(writes).then(function(results){
+      var failed = results.filter(function(r){ return !r.ok; }).length;
+      if(failed>0){
+        flash.textContent = '⚠ 일부 저장에 실패했어요('+failed+'/'+results.length+'). 다시 눌러주세요.';
+        flash.style.color = 'var(--critical)';
+      } else {
+        flash.textContent = '✓ 저장 완료 · 추이에 반영했어요 ('+filledCount+'개 값)';
+        flash.style.color = 'var(--good)';
+        setTimeout(function(){ flash.style.opacity = '0'; }, 2200);
+      }
+    });
   });
 
   document.body.addEventListener('change', function(e){
@@ -1140,14 +1190,17 @@
       renderCards(); renderSummary();
     }
     else if(bind==='exam'){
+      state.userEditedExams = true;
       var round=t.dataset.round, subj2=t.dataset.subj, field3=t.dataset.field;
       var ex = state.exams[round] = state.exams[round] || {subjects:{}};
       ex.subjects = ex.subjects || {};
       ex.subjects[subj2] = Object.assign({score:null,grade:null}, ex.subjects[subj2]);
       var raw = t.value.trim();
-      if(field3==='grade' && raw!==''){
-        var gnum = Number(raw);
-        if(isNaN(gnum) || gnum<1 || gnum>9){ t.value = ex.subjects[subj2].grade==null?'':ex.subjects[subj2].grade; return; }
+      if(field3==='grade'){
+        var parsed2 = parseGradeInput(raw);
+        if(parsed2===null){ t.value = ex.subjects[subj2].grade==null?'':ex.subjects[subj2].grade; return; }
+        raw = parsed2===''?'':String(parsed2);
+        t.value = raw;
       }
       ex.subjects[subj2][field3] = raw;
       writeDoc('exams/'+round, {subjects: mkNested(subj2, field3, raw)});
@@ -1202,7 +1255,7 @@
       snap.docs.forEach(function(d){ next[d.id] = d.data(); });
       state.exams = next;
       renderSummary(); renderAvgChart(); renderSubjChart(); renderGoals();
-      if(!focusInside('entryTable')) renderEntryTable();
+      if(!state.userEditedExams && !focusInside('entryTable')) renderEntryTable();
       if(!focusInside('cardGrid')) renderCards();
     }, function(err){ console.warn('exams sub error', err); });
 
@@ -1216,7 +1269,7 @@
       renderSubjChart();
       renderGoals();
       if(!focusInside('cardGrid')) renderCards();
-      if(!focusInside('entryTable')) renderEntryTable();
+      if(!state.userEditedExams && !focusInside('entryTable')) renderEntryTable();
     }, function(err){ console.warn('settings sub error', err); });
 
     db.doc('goals/targets').onSnapshot(function(snap){
