@@ -440,7 +440,7 @@
   function defaultCard(){
     return {track:'', minReqText:'', manualStatus:'unknown',
       rule:{enabled:false, subjects:['kor','math','eng','tam1','tam2'], count:2, maxSum:6,
-            engMode:'include', engMax:2, histEnabled:false, histMax:4, tamMode:'separate', mathRequired:false}};
+            engMode:'include', engMax:2, histEnabled:false, histMax:4, tamMode:'separate', requiredSubjects:[]}};
   }
   var TAM_MODE_LABEL = {
     separate:'탐구1·탐구2 각각 반영',
@@ -486,31 +486,29 @@
       return {id:s, g:g};
     }).filter(function(x){return x.g!=null;});
     var poolStatus = 'unknown', poolSum = null;
-    if(r.mathRequired){
-      var mg = latestGrade('math');
-      if(mg==null){
-        reasonParts.push('수학 성적 미입력 (필수 반영)');
+    var requiredIds = (r.requiredSubjects||[]).filter(function(s){ return poolIds.indexOf(s)>=0; });
+    var requiredVals = poolIds.filter(function(s){return requiredIds.indexOf(s)>=0;}).map(function(s){
+      var g = s==='tam' ? tamCombinedGrade(r.tamMode||'separate') : latestGrade(s);
+      return {id:s, g:g};
+    });
+    var missingRequired = requiredVals.filter(function(x){return x.g==null;});
+    if(r.count<=0){
+      // no sum condition configured
+    } else if(missingRequired.length){
+      reasonParts.push(missingRequired.map(function(x){return subjName(x.id);}).join(', ')+' 성적 미입력 (필수)');
+    } else {
+      var optionalVals = poolVals.filter(function(x){return requiredIds.indexOf(x.id)<0;});
+      var needOptional = Math.max(0, r.count - requiredVals.length);
+      if(optionalVals.length < needOptional){
+        reasonParts.push('반영 과목 성적 부족');
       } else {
-        var restVals = poolVals.filter(function(x){return x.id!=='math';});
-        var needRest = Math.max(0, r.count-1);
-        if(restVals.length < needRest){
-          reasonParts.push('반영 과목 성적 부족');
-        } else {
-          restVals.sort(function(a,b){return a.g-b.g;});
-          var chosenM = [{id:'math', g:mg}].concat(restVals.slice(0, needRest));
-          poolSum = chosenM.reduce(function(a,b){return a+b.g;},0);
-          poolStatus = poolSum <= r.maxSum ? 'met' : 'unmet';
-          reasonParts.push(chosenM.map(function(c){return subjName(c.id)+' '+fmtNum(c.g);}).join('+')+'='+fmtNum(poolSum)+' (기준 '+r.maxSum+' 이내, 수학 필수)');
-        }
+        optionalVals.sort(function(a,b){return a.g-b.g;});
+        var chosen = requiredVals.concat(optionalVals.slice(0, needOptional));
+        poolSum = chosen.reduce(function(a,b){return a+b.g;},0);
+        poolStatus = poolSum <= r.maxSum ? 'met' : 'unmet';
+        var reqTag = requiredIds.length ? (', 필수: '+requiredIds.map(subjName).join('·')) : '';
+        reasonParts.push(chosen.map(function(c){return subjName(c.id)+' '+fmtNum(c.g);}).join('+')+'='+fmtNum(poolSum)+' (기준 '+r.maxSum+' 이내'+reqTag+')');
       }
-    } else if(poolVals.length >= r.count && r.count>0){
-      poolVals.sort(function(a,b){return a.g-b.g;});
-      var chosen = poolVals.slice(0, r.count);
-      poolSum = chosen.reduce(function(a,b){return a+b.g;},0);
-      poolStatus = poolSum <= r.maxSum ? 'met' : 'unmet';
-      reasonParts.push(chosen.map(function(c){return subjName(c.id)+' '+fmtNum(c.g);}).join('+')+'='+fmtNum(poolSum)+' (기준 '+r.maxSum+' 이내)');
-    } else if(r.count>0){
-      reasonParts.push('반영 과목 성적 부족');
     }
 
     var engStatus = 'met';
@@ -636,14 +634,21 @@
         html += '    <div><label style="display:block;font-size:10.5px;color:var(--ink-3);font-weight:700;margin-block-end:4px">합산 반영 과목</label><div class="chip-row">';
         var tamMode = r.tamMode||'separate';
         var subjChoices = tamMode==='separate' ? ['kor','math','eng','tam1','tam2'] : ['kor','math','eng','tam'];
-        subjChoices.forEach(function(sid){
-          if(sid==='eng' && r.engMode!=='include') return;
-          var forced = r.mathRequired && sid==='math';
-          var checked = forced || r.subjects.indexOf(sid)>=0;
-          html += '<label class="chip"><input type="checkbox" data-bind="cardrulesubj" data-uni="'+u.id+'" data-subj="'+sid+'" '+(checked?'checked':'')+' '+(forced?'disabled':'')+'>'+subjName(sid)+(forced?' (필수)':'')+'</label>';
+        var poolNow = subjChoices.filter(function(sid){ return !(sid==='eng' && r.engMode!=='include'); });
+        poolNow.forEach(function(sid){
+          var checked = r.subjects.indexOf(sid)>=0;
+          html += '<label class="chip"><input type="checkbox" data-bind="cardrulesubj" data-uni="'+u.id+'" data-subj="'+sid+'" '+(checked?'checked':'')+'>'+subjName(sid)+'</label>';
         });
         html += '    </div></div>';
-        html += '    <label class="toggle-line"><input type="checkbox" data-bind="cardrule" data-uni="'+u.id+'" data-field="mathRequired" '+(r.mathRequired?'checked':'')+'> 수학 필수 반영 (반영 과목과 무관하게 항상 합산에 포함)</label>';
+        var inPool = poolNow.filter(function(sid){ return r.subjects.indexOf(sid)>=0; });
+        if(inPool.length){
+          html += '    <div><label style="display:block;font-size:10.5px;color:var(--ink-3);font-weight:700;margin-block-end:4px">필수 과목 (반영 개수와 무관하게 항상 합산에 포함)</label><div class="chip-row">';
+          inPool.forEach(function(sid){
+            var reqChecked = (r.requiredSubjects||[]).indexOf(sid)>=0;
+            html += '<label class="chip"><input type="checkbox" data-bind="cardrulereq" data-uni="'+u.id+'" data-subj="'+sid+'" '+(reqChecked?'checked':'')+'>'+subjName(sid)+'</label>';
+          });
+          html += '    </div></div>';
+        }
         html += '    <div class="row2">'+
           '<div class="num-field">반영 개수<input type="number" min="1" max="5" data-bind="cardrule" data-uni="'+u.id+'" data-field="count" value="'+r.count+'"></div>'+
           '<div class="num-field">합 기준(이내)<input type="number" min="1" max="45" data-bind="cardrule" data-uni="'+u.id+'" data-field="maxSum" value="'+r.maxSum+'"></div>'+
@@ -1018,16 +1023,26 @@
       state.cards[uni2] = c;
       var r = Object.assign({}, c.rule);
       if(field2==='enabled'){ r.enabled = t.checked; }
-      else if(field2==='engModeCheck'){ r.engMode = t.checked ? 'separate':'include'; if(t.checked){ r.subjects = r.subjects.filter(function(s){return s!=='eng';}); } }
+      else if(field2==='engModeCheck'){
+        r.engMode = t.checked ? 'separate':'include';
+        if(t.checked){ r.subjects = r.subjects.filter(function(s){return s!=='eng';}); r.requiredSubjects = (r.requiredSubjects||[]).filter(function(s){return s!=='eng';}); }
+      }
       else if(field2==='histEnabled'){ r.histEnabled = t.checked; }
-      else if(field2==='mathRequired'){ r.mathRequired = t.checked; if(t.checked && r.subjects.indexOf('math')<0){ r.subjects = r.subjects.concat(['math']); } }
       else if(field2==='count' || field2==='maxSum' || field2==='engMax' || field2==='histMax'){ r[field2] = Number(t.value)||0; }
       else if(field2==='tamMode'){
         var hadTam = r.subjects.indexOf('tam1')>=0 || r.subjects.indexOf('tam2')>=0 || r.subjects.indexOf('tam')>=0;
+        var hadReqTam = (r.requiredSubjects||[]).some(function(s){return s==='tam1'||s==='tam2'||s==='tam';});
         var subj = r.subjects.filter(function(s){return s!=='tam1' && s!=='tam2' && s!=='tam';});
-        if(t.value==='separate'){ if(hadTam){ subj.push('tam1'); subj.push('tam2'); } }
-        else { if(hadTam){ subj.push('tam'); } }
+        var req = (r.requiredSubjects||[]).filter(function(s){return s!=='tam1' && s!=='tam2' && s!=='tam';});
+        if(t.value==='separate'){
+          if(hadTam){ subj.push('tam1'); subj.push('tam2'); }
+          if(hadReqTam){ req.push('tam1'); req.push('tam2'); }
+        } else {
+          if(hadTam){ subj.push('tam'); }
+          if(hadReqTam){ req.push('tam'); }
+        }
         r.subjects = subj;
+        r.requiredSubjects = req;
         r.tamMode = t.value;
       }
       state.cards[uni2].rule = r;
@@ -1041,8 +1056,20 @@
       var set = r3.subjects.slice();
       if(t.checked){ if(set.indexOf(subj)<0) set.push(subj); } else { set = set.filter(function(s){return s!==subj;}); }
       r3.subjects = set;
+      if(!t.checked){ r3.requiredSubjects = (r3.requiredSubjects||[]).filter(function(s){return s!==subj;}); }
       state.cards[uni3] = c3; state.cards[uni3].rule = r3;
       writeDoc('cards/'+uni3, {rule:r3});
+      renderCards(); renderSummary();
+    }
+    else if(bind==='cardrulereq'){
+      var uni4=t.dataset.uni, subj4r=t.dataset.subj;
+      var c4 = cardOf(uni4);
+      var r4 = Object.assign({}, c4.rule);
+      var reqSet = (r4.requiredSubjects||[]).slice();
+      if(t.checked){ if(reqSet.indexOf(subj4r)<0) reqSet.push(subj4r); } else { reqSet = reqSet.filter(function(s){return s!==subj4r;}); }
+      r4.requiredSubjects = reqSet;
+      state.cards[uni4] = c4; state.cards[uni4].rule = r4;
+      writeDoc('cards/'+uni4, {rule:r4});
       renderCards(); renderSummary();
     }
     else if(bind==='exam'){
