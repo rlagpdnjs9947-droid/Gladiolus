@@ -494,6 +494,11 @@
     avg_round:'탐구 2과목 평균 반영 (반올림)',
     avg_exact:'탐구 2과목 평균 반영 (소수점 유지)'
   };
+  var ENG_MODE_LABEL = {
+    include:'영어 일반 반영 (다른 과목과 동일하게 경쟁)',
+    include_conditional:'영어가 반영되면 등급 제한 적용',
+    separate:'영어 별도 기준 (합산 제외, 등급 상한만 적용)'
+  };
   function tamCombinedGrade(mode){
     var g1 = latestGrade('tam1'), g2 = latestGrade('tam2');
     if(mode==='best1'){
@@ -553,6 +558,14 @@
         poolStatus = poolSum <= r.maxSum ? 'met' : 'unmet';
         var reqTag = requiredIds.length ? (', 필수: '+requiredIds.map(subjName).join('·')) : '';
         reasonParts.push(chosen.map(function(c){return subjName(c.id)+' '+fmtNum(c.g);}).join('+')+'='+fmtNum(poolSum)+' (기준 '+r.maxSum+' 이내'+reqTag+')');
+
+        if(r.engMode==='include_conditional'){
+          var engChosen = chosen.filter(function(c){return c.id==='eng';})[0];
+          if(engChosen && engChosen.g > r.engMax){
+            poolStatus = 'unmet';
+            reasonParts.push('영어가 반영 과목에 포함되어 등급 제한 적용: 영어 '+fmtNum(engChosen.g)+'등급 (기준 '+r.engMax+' 이내) 미충족');
+          }
+        }
       }
     }
 
@@ -722,7 +735,7 @@
         html += '    <div><label style="display:block;font-size:10.5px;color:var(--ink-3);font-weight:700;margin-block-end:4px">합산 반영 과목</label><div class="chip-row">';
         var tamMode = r.tamMode||'separate';
         var subjChoices = tamMode==='separate' ? ['kor','math','eng','tam1','tam2'] : ['kor','math','eng','tam'];
-        var poolNow = subjChoices.filter(function(sid){ return !(sid==='eng' && r.engMode!=='include'); });
+        var poolNow = subjChoices.filter(function(sid){ return !(sid==='eng' && r.engMode==='separate'); });
         poolNow.forEach(function(sid){
           var checked = r.subjects.indexOf(sid)>=0;
           html += '<label class="chip"><input type="checkbox" data-bind="cardrulesubj" data-uni="'+u.id+'" data-subj="'+sid+'" '+(checked?'checked':'')+'>'+subjName(sid)+'</label>';
@@ -741,8 +754,12 @@
           '<div class="num-field">반영 개수<input type="number" min="1" max="5" data-bind="cardrule" data-uni="'+u.id+'" data-field="count" value="'+r.count+'"></div>'+
           '<div class="num-field">합 기준(이내)<input type="number" min="1" max="45" data-bind="cardrule" data-uni="'+u.id+'" data-field="maxSum" value="'+r.maxSum+'"></div>'+
         '</div>';
-        html += '    <label class="toggle-line"><input type="checkbox" data-bind="cardrule" data-uni="'+u.id+'" data-field="engModeCheck" '+(r.engMode==='separate'?'checked':'')+'> 영어 별도 기준(등급 상한)</label>';
-        if(r.engMode==='separate'){
+        html += '    <div class="field"><label>영어 반영 방식</label><select data-bind="cardrule" data-uni="'+u.id+'" data-field="engMode">'+
+          ['include','include_conditional','separate'].map(function(m){
+            return '<option value="'+m+'" '+(r.engMode===m?'selected':'')+'>'+ENG_MODE_LABEL[m]+'</option>';
+          }).join('')+
+          '</select></div>';
+        if(r.engMode==='separate' || r.engMode==='include_conditional'){
           html += '    <div class="num-field">영어 등급 기준(이내)<input type="number" min="1" max="9" data-bind="cardrule" data-uni="'+u.id+'" data-field="engMax" value="'+r.engMax+'"></div>';
         }
         html += '    <label class="toggle-line"><input type="checkbox" data-bind="cardrule" data-uni="'+u.id+'" data-field="histEnabled" '+(r.histEnabled?'checked':'')+'> 한국사 등급 기준</label>';
@@ -1148,9 +1165,15 @@
       state.cards[uni2] = c;
       var r = Object.assign({}, c.rule);
       if(field2==='enabled'){ r.enabled = t.checked; }
-      else if(field2==='engModeCheck'){
-        r.engMode = t.checked ? 'separate':'include';
-        if(t.checked){ r.subjects = r.subjects.filter(function(s){return s!=='eng';}); r.requiredSubjects = (r.requiredSubjects||[]).filter(function(s){return s!=='eng';}); }
+      else if(field2==='engMode'){
+        var wasSeparate = r.engMode==='separate';
+        r.engMode = t.value;
+        if(t.value==='separate'){
+          r.subjects = r.subjects.filter(function(s){return s!=='eng';});
+          r.requiredSubjects = (r.requiredSubjects||[]).filter(function(s){return s!=='eng';});
+        } else if(wasSeparate && r.subjects.indexOf('eng')<0){
+          r.subjects = r.subjects.concat(['eng']);
+        }
       }
       else if(field2==='histEnabled'){ r.histEnabled = t.checked; }
       else if(field2==='count' || field2==='maxSum' || field2==='engMax' || field2==='histMax'){ r[field2] = Number(t.value)||0; }
