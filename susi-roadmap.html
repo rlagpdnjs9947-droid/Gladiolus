@@ -134,6 +134,20 @@
   .ring-wrap{display:flex; align-items:center; gap:10px}
   .ring-wrap .value{font-size:20px}
 
+  .status-groups{display:flex; flex-direction:column; gap:8px; margin-block-start:10px}
+  .status-group{
+    display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+    background:var(--card); border:1px solid var(--line); border-radius:12px; padding:10px 14px; box-shadow:var(--shadow);
+  }
+  .status-group .group-label{font-size:11.5px; font-weight:700; color:var(--ink-3); white-space:nowrap}
+  .status-group .uni-chip{
+    display:inline-flex; align-items:center; padding:4px 11px; border-radius:999px; font-size:12.5px; font-weight:700;
+  }
+  .status-group .uni-chip.met{background:var(--good-soft); color:var(--good)}
+  .status-group .uni-chip.unmet{background:var(--critical-soft); color:var(--critical)}
+  .status-group .uni-chip.unknown{background:var(--unknown-soft); color:var(--unknown)}
+  .status-group .empty-hint{font-size:12px; color:var(--ink-3)}
+
   /* cards */
   .card-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:12px}
   @media (max-width:760px){.card-grid{grid-template-columns:repeat(2,1fr)}}
@@ -289,6 +303,7 @@
       <span class="hint">최신 응시 성적 기준</span>
     </div>
     <div class="stat-grid" id="statGrid"></div>
+    <div class="status-groups" id="statusGroups"></div>
   </section>
 
   <section id="cards">
@@ -583,8 +598,10 @@
     var targetAvg = avgIds.reduce(function(a,s){return a+num(goals[s]);},0) / avgIds.length;
 
     var metCount = 0, unmetCount=0, unknownCount=0;
+    var byStatus = {met:[], unmet:[], unknown:[]};
     UNIS.forEach(function(u){
       var st = computeCardStatus(cardOf(u.id)).status;
+      byStatus[st].push(u.name);
       if(st==='met') metCount++; else if(st==='unmet') unmetCount++; else unknownCount++;
     });
 
@@ -608,6 +625,20 @@
               '<circle cx="18" cy="18" r="15.9155" fill="none" stroke="'+(closeness!=null && closeness>=1?'var(--good)':'var(--accent)')+'" stroke-width="4" stroke-linecap="round" stroke-dasharray="'+dash+'" transform="rotate(-90 18 18)"></circle>'+
             '</svg><div class="value">'+(closeness==null?'-':Math.round(closeness*100)+'%')+'</div></div></div>';
     document.getElementById('statGrid').innerHTML = html;
+
+    var groupDefs = [
+      {key:'met', label:'충족 · '+metCount+'개'},
+      {key:'unmet', label:'미충족 · '+unmetCount+'개'},
+      {key:'unknown', label:'미정 · '+unknownCount+'개'}
+    ];
+    var groupsHtml = groupDefs.map(function(g){
+      var names = byStatus[g.key];
+      var chips = names.length
+        ? names.map(function(n){ return '<span class="uni-chip '+g.key+'">'+esc(n)+'</span>'; }).join('')
+        : '<span class="empty-hint">해당 없음</span>';
+      return '<div class="status-group"><span class="group-label">'+g.label+'</span>'+chips+'</div>';
+    }).join('');
+    document.getElementById('statusGroups').innerHTML = groupsHtml;
   }
 
   function renderCards(){
